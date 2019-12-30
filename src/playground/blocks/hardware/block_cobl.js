@@ -465,6 +465,7 @@ Entry.Cobl.getBlocks = function() {
                 {
                     type: 'Block',
                     accept: 'string',
+                    value: 0,
                 },
                 {
                     type: 'Indicator',
@@ -473,7 +474,7 @@ Entry.Cobl.getBlocks = function() {
                 },
             ],
             def: {
-                params: ['90'],
+                params: ['0'],
                 type: 'cobl_servo_angle_control',
             },
             paramsKeyMap: {
@@ -482,7 +483,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var value = script.getNumberValue('VALUE');
+                var value = script.getNumberField('VALUE');
                 value = Math.round(value);
                 value = Math.max(value, 15);
                 value = Math.min(value, 165);
@@ -555,7 +556,7 @@ Entry.Cobl.getBlocks = function() {
             isNotFor: ['cobl'],
             func: function(sprite, script) {
                 var melody = script.getStringField('MELODY');
-                var duration = script.getNumberValue('DURATION');
+                var duration = script.getStringField('DURATION');
 
                 Entry.hw.setDigitalPortValue('Melody', melody);
                 Entry.hw.setDigitalPortValue('Melody_DUR', duration);
@@ -745,7 +746,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var led = script.getNumberValue('PORT');
+                var led = script.getStringField('PORT');
                 var value = script.getStringField('OPERATOR');
 
                 Entry.hw.setDigitalPortValue('ELED_IDX', led);
@@ -884,7 +885,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var led = script.getNumberValue('LED');
+                var led = script.getNumberField('LED');
                 var r = script.getStringField('RED');
                 var g = script.getStringField('GREEN');
                 var b = script.getStringField('BLUE');
@@ -931,7 +932,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var value = script.getNumberValue('VALUE');
+                var value = script.getNumberField('VALUE');
                 var value_s = value.toString();
                 var value_c = value_s.substring(0, 4);
                 Entry.hw.setDigitalPortValue('7SEG', value_c);

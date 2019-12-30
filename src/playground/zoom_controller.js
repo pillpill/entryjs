@@ -48,46 +48,38 @@ Entry.ZoomController = class ZoomController {
     }
 
     renderStart(zoomGroup) {
-        const {
-            btn_zoom_bg = `${Entry.mediaFilePath}btn_zoom_bg.svg`,
-            btn_zoom_out = `${Entry.mediaFilePath}btn_zoom_out.svg`,
-            btn_zoom_reset = `${Entry.mediaFilePath}btn_zoom_reset.svg`,
-            btn_zoom_in = `${Entry.mediaFilePath}btn_zoom_in.svg`,
-        } = EntryStatic.images || {};
-        const isSafari = Entry.getBrowserType().indexOf('Safari') >= 0;
-        const shadowFilter = isSafari ? 'none' : 'url(#entryButtonShadowFilter)';
         zoomGroup.svgZoom.elem('image', {
-            href: btn_zoom_bg,
+            href: `${Entry.mediaFilePath}btn_zoom_bg.svg`,
             width: this.CONTROLLER_WIDTH,
             height: this.CONTROLLER_HEIGHT,
         });
         zoomGroup.zoomOut = zoomGroup.svgZoom.elem('image', {
-            href: btn_zoom_out,
+            href: `${Entry.mediaFilePath}btn_zoom_out.svg`,
             x: 4,
             y: 3,
             width: 32,
             height: 32,
-            filter: shadowFilter,
-            style: 'cursor: default; cursor: -moz-zoom-out; cursor: -webkit-zoom-out; cursor: -ms-zoom-out; cursor: -o-zoom-out;',
+            filter: 'url(#entryButtonShadowFilter)',
+            style: 'cursor: zoom-out;',
         });
         zoomGroup.zoomReset = zoomGroup.svgZoom.elem('image', {
             id: 'zoom_reset',
-            href: btn_zoom_reset,
+            href: `${Entry.mediaFilePath}btn_zoom_reset.svg`,
             x: 44,
             y: 3,
             width: 40,
             height: 32,
-            filter: shadowFilter,
+            filter: 'url(#entryButtonShadowFilter)',
             style: 'cursor: pointer;',
         });
         zoomGroup.zoomIn = zoomGroup.svgZoom.elem('image', {
-            href: btn_zoom_in,
+            href: `${Entry.mediaFilePath}btn_zoom_in.svg`,
             x: 92,
             y: 3,
             width: 32,
             height: 32,
-            filter: shadowFilter,
-            style: 'cursor: default; cursor: -moz-zoom-in; cursor: -webkit-zoom-in; cursor: -ms-zoom-in; cursor: -o-zoom-in;',
+            filter: 'url(#entryButtonShadowFilter)',
+            style: 'cursor: zoom-in;',
         });
     }
 

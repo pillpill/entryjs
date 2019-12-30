@@ -123,8 +123,7 @@ class _GEHelper extends GEHelperBase {
     cloneStamp(entity:any):any {
         if(this._isWebGL) {
             let orgObj = entity.object;
-            const orgTex = orgObj.internal_getOriginalTex && orgObj.internal_getOriginalTex();
-            let object = PIXIHelper.sprite('StampEntity', orgTex || orgObj.texture);
+            let object = PIXIHelper.sprite('StampEntity', orgObj.texture);
             object.visible = orgObj.visible;
             object.interactive = false;
             object.interactiveChildren = false;
@@ -214,7 +213,7 @@ class _GEHelper extends GEHelperBase {
 
     newEmptySprite() {
         if(this._isWebGL) {
-            return PIXIHelper.sprite();
+            return new PIXISprite();
         } else {
             return new createjs.Bitmap();
         }

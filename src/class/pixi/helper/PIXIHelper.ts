@@ -1,7 +1,6 @@
 
 import DestroyOptions = PIXI.DestroyOptions;
 import Texture = PIXI.Texture;
-import { PIXISprite } from '../plugins/PIXISprite';
 
 
 export class PIXIGraphics extends PIXI.Graphics {
@@ -22,7 +21,7 @@ let PIXIText:any = require('../text/PIXIText').PIXIText;
 export default class PIXIHelper {
 
     static sprite(debugName?:string, texture?:Texture):PIXI.Sprite {
-        return new PIXISprite(texture);
+        return new PIXI.Sprite(texture);
     }
 
     static container(debugName?:string):PIXI.Container {

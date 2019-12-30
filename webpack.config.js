@@ -1,6 +1,6 @@
 'use strict';
 
-let conf;
+var conf;
 
 switch (process.env.NODE_ENV) {
     case 'production':

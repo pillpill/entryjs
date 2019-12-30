@@ -3,7 +3,6 @@
 'use strict';
 
 import { ColorPicker } from '@entrylabs/tool';
-import Extension from '../../extensions/extension';
 
 /*
  *
@@ -31,22 +30,21 @@ Entry.FieldColor = class FieldColor extends Entry.Field {
         this._CONTENT_WIDTH = this.getContentWidth();
 
         this.renderStart();
-        this.dropper = Extension.getExtension('Dropper');
     }
 
     renderStart() {
         if (this.svgGroup) {
             $(this.svgGroup).remove();
         }
-        const { contentSvgGroup, renderMode } = this._blockView;
+        var { contentSvgGroup, renderMode } = this._blockView;
         this.svgGroup = contentSvgGroup.elem('g', {
             class: 'entry-field-color',
         });
 
-        let x, y, WIDTH, HEIGHT;
+        var x, y, WIDTH, HEIGHT;
 
         if (renderMode === Entry.BlockView.RENDER_MODE_TEXT) {
-            const rect = this.svgGroup.elem('rect', {
+            var rect = this.svgGroup.elem('rect', {
                 x: 0,
                 rx: 3,
                 ry: 3,
@@ -56,14 +54,14 @@ Entry.FieldColor = class FieldColor extends Entry.Field {
 
             this.textElement = this.svgGroup.elem('text').attr({
                 style: 'white-space: pre;',
-                'font-size': `${this._fontSize}px`,
-                'font-family': EntryStatic.fontFamily || 'NanumGothic',
+                'font-size': this._fontSize + 'px',
+                'font-family': 'NanumGothic',
                 class: 'dragNone',
                 fill: this._color,
             });
 
             this.textElement.textContent = this._convert(this.getValue(), this.getValue());
-            const bBox = this.textElement.getBoundingClientRect();
+            var bBox = this.textElement.getBoundingClientRect();
             WIDTH = bBox.width + 12;
             HEIGHT = bBox.height;
             rect.attr({
@@ -78,7 +76,7 @@ Entry.FieldColor = class FieldColor extends Entry.Field {
         } else {
             HEIGHT = this._CONTENT_HEIGHT;
             WIDTH = this._CONTENT_WIDTH;
-            const position = this._position;
+            var position = this._position;
             if (position) {
                 x = position.x || 0;
                 y = position.y || 0;
@@ -88,8 +86,8 @@ Entry.FieldColor = class FieldColor extends Entry.Field {
             }
 
             this._header = this.svgGroup.elem('rect', {
-                x,
-                y,
+                x: x,
+                y: y,
                 rx: 2,
                 ry: 2,
                 width: 20, //WIDTH,
@@ -122,27 +120,6 @@ Entry.FieldColor = class FieldColor extends Entry.Field {
         this.disposeEvent = Entry.disposeEvent.attach(this, action);
     }
 
-    spoidClick = _.debounce(() => {
-        this.isRunSpoid = true;
-        this.colorPicker.data = {
-            activeSpoid: true,
-        };
-        const { canvas } = Entry.stage.canvas || {};
-        this.dropper
-            .show({
-                target: canvas,
-            })
-            .once('pick', (color) => {
-                const data = { activeSpoid: false };
-                if (color) {
-                    this.applyValue(color);
-                    data.color = color;
-                }
-                this.colorPicker.setData(data);
-                delete this.isRunSpoid;
-            });
-    });
-
     renderOptions() {
         this.optionGroup = Entry.Dom('div', {
             class: 'entry-color-picker',
@@ -166,7 +143,21 @@ Entry.FieldColor = class FieldColor extends Entry.Field {
                     }
                     this._attachDisposeEvent();
                 },
-                onSpoidClick: this.spoidClick,
+                onSpoidClick: () => {
+                    this.isRunSpoid = true;
+                    this.colorPicker.data = {
+                        activeSpoid: true,
+                    };
+                    Entry.stage.colorSpoid.run().once('selectColor', (color) => {
+                        const data = { activeSpoid: false };
+                        if (color) {
+                            this.applyValue(color);
+                            data.color = color;
+                        }
+                        this.colorPicker.setData(data);
+                        delete this.isRunSpoid;
+                    });
+                },
             },
             container: this.optionGroup[0],
         }).on('change', (color) => {

@@ -4,11 +4,10 @@
  */
 'use strict';
 
-import { Backpack, ColorPicker, Dropdown, Sortable } from '@entrylabs/tool';
+import { Sortable, ColorPicker, Dropdown, BackPack } from '@entrylabs/tool';
 import Toast from '../playground/toast';
 import EntryEvent from '@entrylabs/event';
 import { Destroyer } from '../util/destroyer/Destroyer';
-import { saveAs } from 'file-saver';
 
 const Entry = require('../entry');
 
@@ -17,11 +16,12 @@ const Entry = require('../entry');
  * This manage all view related with block.
  * @constructor
  */
-Entry.Playground = class Playground {
+Entry.Playground = class {
     constructor() {
         this._destroyer = this._destroyer || new Destroyer();
         this._destroyer.destroy();
         this.isTextBGMode_ = false;
+        this.enableArduino = false;
 
         /**
          * playground's current view type
@@ -32,9 +32,10 @@ Entry.Playground = class Playground {
         Entry.addEventListener('textEdited', () => {
             this.injectText();
         });
+        Entry.addEventListener('hwChanged', () => {
+            this.updateHW();
+        });
         Entry.addEventListener('commentVisibleChanged', this.toggleCommentButtonVisible.bind(this));
-
-        Entry.windowResized.attach(this, this.clearClientRectMemo.bind(this));
     }
 
     setMode(mode) {
@@ -68,7 +69,8 @@ Entry.Playground = class Playground {
             const curtainView = Entry.createElement('div', 'entryCurtain')
                 .addClass('entryPlaygroundCurtainWorkspace entryRemove')
                 .appendTo(this.view_);
-            curtainView.innerHTML = Lang.Workspace.cannot_edit_click_to_stop;
+            const [mentHead, mentTail = ''] = Lang.Workspace.cannot_edit_click_to_stop.split('.');
+            curtainView.innerHTML = `${mentHead}.<br/>${mentTail}`;
             curtainView.addEventListener('click', () => {
                 Entry.engine.toggleStop();
             });
@@ -79,16 +81,6 @@ Entry.Playground = class Playground {
                 .appendTo(this.view_);
             this.generatePictureView(pictureView);
             this.pictureView_ = pictureView;
-
-            const pictureCurtainView = Entry.createElement('div', 'entryPictureCurtain')
-                .addClass('entryPlaygroundPictureCurtainWorkspace entryRemove')
-                .appendTo(pictureView);
-            this.pictureCurtainView_ = pictureCurtainView;
-
-            const pictureCurtainText = Entry.createElement('span', 'entryPictureCurtainText')
-                .addClass('entryPlaygroundPictureCurtainWorkspaceText')
-                .appendTo(pictureCurtainView);
-            pictureCurtainText.innerHTML = Lang.Workspace.add_object_before_edit;
 
             const textView = Entry.createElement('div', 'entryText')
                 .addClass('entryPlaygroundTextWorkspace entryRemove')
@@ -214,39 +206,31 @@ Entry.Playground = class Playground {
     }
 
     createButtonTabView(tabButtonView) {
-        const { options = {} } = Entry;
-        const { commentDisable, backpackDisable } = options;
+        const commentToggleButton = Entry.createElement('div')
+            .addClass('entryPlaygroundCommentButtonWorkspace showComment')
+            .appendTo(tabButtonView);
+        commentToggleButton.setAttribute('alt', Lang.Blocks.show_all_comment);
+        commentToggleButton.setAttribute('title', Lang.Blocks.show_all_comment);
 
-        if (!commentDisable) {
-            const commentToggleButton = Entry.createElement('div')
-                .addClass('entryPlaygroundCommentButtonWorkspace showComment')
-                .appendTo(tabButtonView);
-            commentToggleButton.setAttribute('alt', Lang.Blocks.show_all_comment);
-            commentToggleButton.setAttribute('title', Lang.Blocks.show_all_comment);
+        this.commentToggleButton_ = commentToggleButton;
+        commentToggleButton.bindOnClick(() => {
+            this.toggleCommentButton();
+        });
 
-            this.commentToggleButton_ = commentToggleButton;
-            commentToggleButton.bindOnClick(() => {
-                this.toggleCommentButton();
-            });
-        }
+        const backPackButton = Entry.createElement('div')
+            .addClass('entryPlaygroundBackPackButtonWorkspace')
+            .appendTo(tabButtonView);
+        backPackButton.setAttribute('alt', Lang.Blocks.show_all_comment);
+        backPackButton.setAttribute('title', Lang.Blocks.show_all_comment);
 
-        // TODO: 백팩(나의보관함) 숨김처리
-        if (!backpackDisable) {
-            const backPackButton = Entry.createElement('div')
-                .addClass('entryPlaygroundBackPackButtonWorkspace')
-                .appendTo(tabButtonView);
-            backPackButton.setAttribute('alt', Lang.Workspace.my_storage);
-            backPackButton.setAttribute('title', Lang.Workspace.my_storage);
-
-            this.backPackButton_ = backPackButton;
-            backPackButton.bindOnClick(() => {
-                Entry.dispatchEvent('openBackPack');
-            });
-        }
+        this.backPackButton_ = backPackButton;
+        backPackButton.bindOnClick(() => {
+            Entry.dispatchEvent('openBackPack');
+        });
     }
 
     createPackPackView(backPackView) {
-        this.backPack = new Backpack({
+        this.backPack = new BackPack({
             isShow: false,
             data: {
                 items: [],
@@ -260,16 +244,11 @@ Entry.Playground = class Playground {
                     Entry.dispatchEvent('changeBackPackTitle', id, title);
                 },
                 onCustomDragEnter: ({ type, value, onDragEnter }) => {
-                    if (Entry.GlobalSvg.isShow && Entry.GlobalSvg.canAddStorageBlock) {
+                    if (Entry.GlobalSvg.isShow) {
                         const { _view = {} } = Entry.GlobalSvg;
                         onDragEnter({
                             type: 'block',
                             value: _view,
-                        });
-                    } else if (Entry.container.isObjectDragging) {
-                        onDragEnter({
-                            type: 'object',
-                            value: Entry.container.dragObjectKey,
                         });
                     }
                 },
@@ -297,11 +276,11 @@ Entry.Playground = class Playground {
         });
         const desc = Entry.Dom('div', {
             class: 'blockBackPackDesc',
-            text: Lang.Workspace.playground_block_drop,
+            text: Lang.Workspace.my_storage_block_drop,
         });
         const desc2 = Entry.Dom('div', {
-            class: 'objectBackPackDesc',
-            text: Lang.Workspace.container_object_drop,
+            class: 'blockBackPackDesc',
+            text: Lang.Workspace.my_storage_object_drop,
         });
         this.blockBackPackArea.append(icon);
         this.blockBackPackArea.append(desc);
@@ -315,17 +294,22 @@ Entry.Playground = class Playground {
             this.blockBackPackEvent = eventDom;
             const areaDom = new EntryEvent(this.blockBackPackArea[0]);
             this.blockBackPackAreaEvent = areaDom;
-            areaDom.on('dropitem', (e) => {
-                const data = this.backPack.getData('data');
-                Entry.dispatchEvent('addBackPackToEntry', 'block', data);
-                this.blockBackPackArea.css({
-                    display: 'none',
-                });
-            });
-            eventDom.on('enteritem', () => {
-                const isDragging = this.backPack.getData('isDragging');
+            areaDom.on(
+                'drop',
+                (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const id = e.dataTransfer.getData('text');
+                    Entry.dispatchEvent('addBackPackToEntry', 'block', id);
+                    this.blockBackPackArea.css({
+                        display: 'none',
+                    });
+                },
+                false
+            );
+            eventDom.on('dragenter', (e) => {
                 const type = this.backPack.getData('dragType');
-                if (isDragging && type === 'block') {
+                if (type === 'block') {
                     const { width, height, top, left } = blockView[0].getBoundingClientRect();
                     this.blockBackPackArea.css({
                         width: width - 134,
@@ -336,7 +320,12 @@ Entry.Playground = class Playground {
                     });
                 }
             });
-            areaDom.on('leaveitem', (e) => {
+            areaDom.on('dragover', (e) => {
+                e.preventDefault();
+            });
+            areaDom.on('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 this.blockBackPackArea.css({
                     display: 'none',
                 });
@@ -352,19 +341,22 @@ Entry.Playground = class Playground {
             this.objectBackPackEvent = eventDom;
             const areaDom = new EntryEvent(this.objectBackPackArea[0]);
             this.objectBackPackAreaEvent = areaDom;
-
-            areaDom.on('dropitem', (e) => {
-                const data = this.backPack.getData('data');
-                Entry.dispatchEvent('addBackPackToEntry', 'object', data);
-                this.objectBackPackArea.css({
-                    display: 'none',
-                });
-            });
-
-            eventDom.on('enteritem', () => {
-                const isDragging = this.backPack.getData('isDragging');
+            areaDom.on(
+                'drop',
+                (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const id = e.dataTransfer.getData('text');
+                    Entry.dispatchEvent('addBackPackToEntry', 'object', id);
+                    this.objectBackPackArea.css({
+                        display: 'none',
+                    });
+                },
+                false
+            );
+            eventDom.on('dragenter', (e) => {
                 const type = this.backPack.getData('dragType');
-                if (isDragging && type === 'object') {
+                if (type === 'object') {
                     const { width, height, top, left } = objectView[0].getBoundingClientRect();
                     this.objectBackPackArea.css({
                         width,
@@ -375,123 +367,28 @@ Entry.Playground = class Playground {
                     });
                 }
             });
-
-            areaDom.on('leaveitem', (e) => {
+            areaDom.on('dragover', (e) => {
+                e.preventDefault();
+            });
+            areaDom.on('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 this.objectBackPackArea.css({
                     display: 'none',
                 });
             });
         }
-
-        const globalEvent = new EntryEvent(document);
-        globalEvent.data = {};
-        this.globalEvent = globalEvent;
-
-        this.backPack.on('onChangeDragging', (isDragging) => {
-            if (isDragging) {
-                globalEvent.off().on(
-                    'touchmove.itemdrag mousemove.itemdrag',
-                    (e) => {
-                        const isDragging = this.backPack.getData('isDragging');
-                        if (isDragging) {
-                            const point = Entry.Utils.getPosition(e);
-                            const { data } = globalEvent;
-                            const { dom: objectDom } = this.objectBackPackEvent;
-                            const { dom: blockDom } = this.blockBackPackEvent;
-                            const objectRect = this.getBoundingClientRectMemo(objectDom);
-                            const blockRect = this.getBoundingClientRectMemo(blockDom, {
-                                width: -134,
-                                right: -134,
-                            });
-                            if (
-                                !data.isObjectMouseEnter &&
-                                Entry.Utils.isPointInRect(point, objectRect)
-                            ) {
-                                data.isObjectMouseEnter = true;
-                                this.objectBackPackEvent.trigger('enteritem');
-                            } else if (
-                                data.isObjectMouseEnter &&
-                                !Entry.Utils.isPointInRect(point, objectRect)
-                            ) {
-                                data.isObjectMouseEnter = false;
-                                this.objectBackPackAreaEvent.trigger('leaveitem');
-                            }
-                            if (Entry.getMainWS().mode === Entry.Workspace.MODE_BOARD) {
-                                if (
-                                    !data.isBlockMouseEnter &&
-                                    Entry.Utils.isPointInRect(point, blockRect)
-                                ) {
-                                    data.isBlockMouseEnter = true;
-                                    this.blockBackPackEvent.trigger('enteritem');
-                                } else if (
-                                    data.isBlockMouseEnter &&
-                                    !Entry.Utils.isPointInRect(point, blockRect)
-                                ) {
-                                    data.isBlockMouseEnter = false;
-                                    this.blockBackPackAreaEvent.trigger('leaveitem');
-                                }
-                            }
-                        } else {
-                            this.objectBackPackAreaEvent.trigger('leaveitem');
-                            this.blockBackPackAreaEvent.trigger('leaveitem');
-                        }
-                    },
-                    { passive: false }
-                );
-            } else {
-                globalEvent.off();
-            }
-        });
-
-        this.backPack.data = {
-            draggableOption: {
-                lockAxis: 'y',
-                distance: 30,
-                onDropItem: (e) => {
-                    const { data } = globalEvent;
-                    if (data.isObjectMouseEnter) {
-                        data.isObjectMouseEnter = false;
-                        this.objectBackPackAreaEvent.trigger('dropitem');
-                    } else if (data.isBlockMouseEnter) {
-                        data.isBlockMouseEnter = false;
-                        this.blockBackPackAreaEvent.trigger('dropitem');
-                    }
-                },
-            },
-        };
-    }
-
-    setBackpackPointEvent(canPointEvent) {
-        this.backPack.data = {
-            canPointEvent,
-        };
-    }
-
-    getBoundingClientRectMemo = _.memoize((target, offset = {}) => {
-        const rect = target.getBoundingClientRect();
-        const result = {
-            top: rect.top,
-            bottom: rect.bottom,
-            left: rect.left,
-            right: rect.right,
-        };
-        Object.keys(offset).forEach((key) => {
-            result[key] += offset[key];
-        });
-        return result;
-    });
-
-    clearClientRectMemo() {
-        this.getBoundingClientRectMemo.cache = new _.memoize.Cache();
     }
 
     showBackPack(args) {
+        Entry.container.setDraggableObjects(true);
         this.backPack.setData({ ...args });
         this.backPack.show();
         this.backPackView.removeClass('entryRemove');
     }
 
     hideBackPack() {
+        Entry.container.setDraggableObjects(false);
         this.backPack.hide();
         this.backPackView.addClass('entryRemove');
     }
@@ -561,19 +458,16 @@ Entry.Playground = class Playground {
         }
 
         this.mainWorkspace = new Entry.Workspace(initOpts);
+        this._destroyer.add(this.mainWorkspace);
         this.blockMenu = this.mainWorkspace.blockMenu;
         this.board = this.mainWorkspace.board;
         this.toast = new Toast(this.board);
         this.blockMenu.banClass('checker');
-        // this.banExpansionBlock();
-        Entry.expansion.banAllExpansionBlock();
+        this.banExpansionBlock();
         this.vimBoard = this.mainWorkspace.vimBoard;
 
-        this._destroyer.add(this.mainWorkspace);
-        this._destroyer.add(this.toast);
-
         if (Entry.hw) {
-            Entry.hw.refreshHardwareBlockMenu();
+            this.updateHW();
         }
     }
 
@@ -608,18 +502,11 @@ Entry.Playground = class Playground {
                 .addClass('entryPlaygroundPictureList')
                 .appendTo(PictureView);
 
-            const painterDom = Entry.createElement('div', 'entryPainter')
-                .addClass('entryPlaygroundPainter')
-                .appendTo(PictureView);
-
-            switch (Entry.paintMode) {
-                case 'entry-paint':
-                    this.painter = new Entry.Painter(painterDom);
-                    break;
-                case 'literallycanvas':
-                    this.painter = new Entry.LiterallycanvasPainter(painterDom);
-                    break;
-            }
+            this.painter = new Entry.Painter(
+                Entry.createElement('div', 'entryPainter')
+                    .addClass('entryPlaygroundPainter')
+                    .appendTo(PictureView)
+            );
         }
     }
 
@@ -653,9 +540,9 @@ Entry.Playground = class Playground {
         if (!this.object || !this.object.pictures) {
             return [];
         }
-        const id = this.object.id;
+
         return this.object.pictures.map((value) => ({
-            key: `${id}-${value.id}`,
+            key: value.id,
             item: value.view,
         }));
     }
@@ -680,11 +567,10 @@ Entry.Playground = class Playground {
         const fontLink = Entry.createElement('a', 'entryTextBoxAttrFontName').addClass(
             'select_link imico_pop_select_arr_down'
         );
-
         fontLink.bindOnClick(() => {
             const options = EntryStatic.fonts
                 .filter((font) => font.visible)
-                .map((font) => [font.name, font, font.style]);
+                .map((font) => [font.name, font]);
             fontLink.addClass('imico_pop_select_arr_up');
             fontLink.removeClass('imico_pop_select_arr_down');
             this.openDropDown(
@@ -696,18 +582,12 @@ Entry.Playground = class Playground {
                     if (that.object.entity.getLineBreak()) {
                         textValue = textEditArea.value;
                     }
-                    const { options = {} } = Entry;
-                    const { textOptions = {} } = options;
-                    const { hanjaEnable } = textOptions;
-                    if (!hanjaEnable) {
-                        if (/[\u4E00-\u9FFF]/.exec(textValue) != null) {
-                            font = options[0][1];
-                            entrylms.alert(Lang.Menus.not_supported_text);
-                        }
+
+                    if (/[\u4E00-\u9FFF]/.exec(textValue) != null) {
+                        font = options[0][1];
+                        entrylms.alert(Lang.Menus.not_supported_text);
                     }
                     fontLink.innerText = font.name;
-                    this.textEditArea.style.fontFamily = font.family;
-                    this.textEditInput.style.fontFamily = font.family;
                     $('#entryTextBoxAttrFontName').data('font', font);
                     this.object.entity.setFontType(font.family);
                 },
@@ -806,8 +686,7 @@ Entry.Playground = class Playground {
         through.setAttribute('title', Lang.Workspace.font_cancel);
         styleBox.appendChild(through);
 
-        const color = Entry.createElement('a').addClass('imbtn_pop_font_color');
-        color.appendChild(Entry.createElement('em'));
+        const color = Entry.createElement('a').addClass('style_link imbtn_pop_font_color');
         color.bindOnClick(() =>
             this.openColourPicker(
                 color,
@@ -819,9 +698,10 @@ Entry.Playground = class Playground {
         color.setAttribute('title', Lang.Workspace.font_color);
         styleBox.appendChild(color);
 
-        const backgroundColor = Entry.createElement('a').addClass('imbtn_pop_font_backgroundcolor');
+        const backgroundColor = Entry.createElement('a').addClass(
+            'style_link imbtn_pop_font_backgroundcolor'
+        );
         backgroundColor.setAttribute('title', Lang.Workspace.font_fill);
-        backgroundColor.appendChild(Entry.createElement('em'));
         backgroundColor.bindOnClick(() =>
             this.openColourPicker(
                 backgroundColor,
@@ -906,13 +786,7 @@ Entry.Playground = class Playground {
             const entity = object.entity;
             const selected = $('#entryTextBoxAttrFontName').data('font');
             const defaultFont = EntryStatic.fonts[0];
-            const { options = {} } = Entry;
-            const { textOptions = {} } = options;
-            const { hanjaEnable } = textOptions;
-            if (
-                !hanjaEnable &&
-                (selected.family === 'Nanum Pen Script' || selected.family === 'Jeju Hallasan')
-            ) {
+            if (selected.family === 'Nanum Pen Script' || selected.family === 'Jeju Hallasan') {
                 if (/[\u4E00-\u9FFF]/.exec(this.value) != null) {
                     $('#entryTextBoxAttrFontName').text(defaultFont.name);
                     entity.setFontType(defaultFont.family);
@@ -1066,9 +940,9 @@ Entry.Playground = class Playground {
         if (!this.object || !this.object.sounds) {
             return [];
         }
-        const id = this.object.id;
+
         return this.object.sounds.map((value) => ({
-            key: `${id}-${value.id}`,
+            key: value.id,
             item: value.view,
         }));
     }
@@ -1164,7 +1038,7 @@ Entry.Playground = class Playground {
     /**
      * Inject picture
      */
-    injectPicture(isSelect = true) {
+    injectPicture() {
         const view = this.pictureListView_;
         if (!view) {
             return;
@@ -1181,7 +1055,7 @@ Entry.Playground = class Playground {
                 element.orderHolder.innerHTML = i + 1;
             });
 
-            isSelect && this.selectPicture(this.object.selectedPicture);
+            this.selectPicture(this.object.selectedPicture);
         }
 
         this.updatePictureView();
@@ -1191,7 +1065,7 @@ Entry.Playground = class Playground {
      * Add picture
      * @param {picture model} picture
      */
-    addPicture(picture, isNew, isSelect = true) {
+    addPicture(picture, isNew) {
         const tempPicture = _.clone(picture);
 
         if (isNew === true) {
@@ -1208,7 +1082,9 @@ Entry.Playground = class Playground {
 
         this.generatePictureElement(picture);
 
-        Entry.do('objectAddPicture', picture.objectId || this.object.id, picture, isSelect);
+        Entry.do('objectAddPicture', picture.objectId || this.object.id, picture);
+        this.injectPicture();
+        this.selectPicture(picture);
     }
 
     /**
@@ -1249,25 +1125,18 @@ Entry.Playground = class Playground {
      */
     downloadPicture(pictureId) {
         const picture = Entry.playground.object.getPicture(pictureId);
-        const { imageType = 'png' } = picture;
-        /**
-            Logic in try phrase will be disregarded after renewal.
-            nt11576
-        */
-        try {
-            if (picture.fileurl) {
-                saveAs(
-                    `/api/sprite/download/entryjs/${btoa(picture.fileurl)}/${encodeURIComponent(
-                        picture.name
-                    )}.png`,
-                    `${picture.name}.${imageType}`
-                );
-            } else {
-                const src = this.painter.getImageSrc(picture);
-                saveAs(src, `${picture.name}.${imageType}`);
-            }
-        } catch (e) {
-            Entry.dispatchEvent('downloadPicture', picture);
+        if (picture.fileurl) {
+            window.open(
+                `/api/sprite/download/entryjs/${btoa(picture.fileurl)}/${encodeURIComponent(
+                    picture.name
+                )}.png`
+            );
+        } else {
+            window.open(
+                `/api/sprite/download/image/${btoa(picture.filename)}/${encodeURIComponent(
+                    picture.name
+                )}.png`
+            );
         }
     }
 
@@ -1284,7 +1153,7 @@ Entry.Playground = class Playground {
      * Select picture
      * @param {picture}
      */
-    selectPicture(picture, removed) {
+    selectPicture(picture) {
         const pictures = this.object.pictures;
         for (let i = 0, len = pictures.length; i < len; i++) {
             const target = pictures[i];
@@ -1305,7 +1174,7 @@ Entry.Playground = class Playground {
             if (!picture.objectId) {
                 picture.objectId = this.object.id;
             }
-            Entry.dispatchEvent('pictureSelected', picture, removed);
+            Entry.dispatchEvent('pictureSelected', picture);
         }
     }
 
@@ -1414,12 +1283,20 @@ Entry.Playground = class Playground {
         }
     }
 
-    addExpansionBlocks(items) {
-        Entry.expansion.addExpansionBlocks(items.map(({ name }) => name));
-    }
+    addExpansionBlock(block, isNew) {
+        const tempBlock = _.clone(block);
+        delete tempBlock.view;
+        if (isNew === true) {
+            delete tempBlock.id;
+        }
 
-    removeExpansionBlocks(items) {
-        Entry.expansion.banExpansionBlocks(items.map(({ name }) => name));
+        block = Entry.Utils.copy(tempBlock);
+
+        if (!block.id) {
+            block.id = Entry.generateHash();
+        }
+
+        Entry.do('objectAddExpansionBlock', block);
     }
     /**
      * Add sound
@@ -1456,8 +1333,6 @@ Entry.Playground = class Playground {
             } else {
                 window.open(sound.fileurl);
             }
-        } else if (sound.path.indexOf('sound') > -1) {
-            Entry.dispatchEvent('downloadSound', sound);
         } else {
             window.open(
                 `/api/sprite/download/sound/${encodeURIComponent(
@@ -1702,54 +1577,6 @@ Entry.Playground = class Playground {
         }
     }
 
-    nameViewBlur() {
-        if (!Entry.playground.nameViewFocus) {
-            return;
-        }
-        if (this.nameView.value.trim() === '') {
-            entrylms.alert(Lang.Workspace.enter_the_name).on('hide', () => {
-                this.nameView.focus();
-            });
-            return true;
-        }
-
-        let nameViewArray = $('.entryPlaygroundPictureName');
-        if (nameViewArray.length !== Entry.playground.object.pictures.length) {
-            nameViewArray = nameViewArray.slice(0, -1); // pop last element (드래그 시 발생하는 임시 엘리먼트임)
-        }
-
-        for (let i = 0; i < nameViewArray.length; i++) {
-            if (
-                nameViewArray.eq(i).val() == this.nameView.value &&
-                nameViewArray[i] != this.nameView
-            ) {
-                entrylms.alert(Lang.Workspace.name_already_exists).on('hide', () => {
-                    this.nameView.focus();
-                });
-                return true;
-            }
-        }
-        const newValue = this.nameView.value;
-        this.nameView.picture.name = newValue;
-        const playground = Entry.playground;
-        if (playground) {
-            if (playground.object) {
-                const pic = playground.object.getPicture(this.nameView.picture.id);
-                if (pic) {
-                    pic.name = newValue;
-                }
-            }
-            const painter = playground.painter;
-            if (painter && painter.file) {
-                painter.file.name = newValue;
-            }
-
-            playground.reloadPlayground();
-        }
-        Entry.dispatchEvent('pictureNameChanged', this.nameView.picture);
-        Entry.playground.nameViewFocus = false;
-    }
-
     generatePictureElement(picture) {
         const element = Entry.createElement('li', picture.id)
             .addClass('entryPlaygroundPictureElement')
@@ -1777,7 +1604,19 @@ Entry.Playground = class Playground {
                 {
                     text: Lang.Workspace.context_remove,
                     callback() {
-                        Entry.playground._removePicture(picture, element);
+                        if (Entry.playground.object.removePicture(picture.id)) {
+                            Entry.removeElement(element);
+                            Entry.dispatchEvent('removePicture', picture);
+                            Entry.toast.success(
+                                Lang.Workspace.shape_remove_ok,
+                                `${picture.name} ${Lang.Workspace.shape_remove_ok_msg}`
+                            );
+                        } else {
+                            Entry.toast.alert(
+                                Lang.Workspace.shape_remove_fail,
+                                Lang.Workspace.shape_remove_fail_msg
+                            );
+                        }
                     },
                 },
                 {
@@ -1820,28 +1659,78 @@ Entry.Playground = class Playground {
             .addClass('entryEllipsis');
         nameView.picture = picture;
         nameView.value = picture.name;
-        Entry.attachEventListener(nameView, 'blur', this.nameViewBlur.bind(this));
-        Entry.attachEventListener(nameView, 'focus', (e) => {
-            this.nameView = e.target;
-            this.nameViewFocus = true;
-        });
+        Entry.attachEventListener(nameView, 'blur', nameViewBlur);
+
+        function nameViewBlur() {
+            if (this.value.trim() === '') {
+                Entry.deAttachEventListener(this, 'blur', nameViewBlur);
+                entrylms.alert(Lang.Workspace.enter_the_name);
+                this.focus();
+                Entry.attachEventListener(this, 'blur', nameViewBlur);
+                return;
+            }
+
+            let nameViewArray = $('.entryPlaygroundPictureName');
+            if (nameViewArray.length !== Entry.playground.object.pictures.length) {
+                nameViewArray = nameViewArray.slice(0, -1); // pop last element (드래그 시 발생하는 임시 엘리먼트임)
+            }
+
+            for (let i = 0; i < nameViewArray.length; i++) {
+                if (nameViewArray.eq(i).val() == nameView.value && nameViewArray[i] != this) {
+                    Entry.deAttachEventListener(this, 'blur', nameViewBlur);
+                    entrylms.alert(Lang.Workspace.name_already_exists);
+                    this.focus();
+                    Entry.attachEventListener(this, 'blur', nameViewBlur);
+                    return;
+                }
+            }
+            const newValue = this.value;
+            this.picture.name = newValue;
+            const playground = Entry.playground;
+            if (playground) {
+                if (playground.object) {
+                    const pic = playground.object.getPicture(this.picture.id);
+                    if (pic) {
+                        pic.name = newValue;
+                    }
+                }
+                const painter = playground.painter;
+                if (painter && painter.file) {
+                    painter.file.name = newValue;
+                }
+
+                playground.reloadPlayground();
+            }
+            Entry.dispatchEvent('pictureNameChanged', this.picture);
+        }
 
         nameView.onkeypress = Entry.Utils.blurWhenEnter;
         element.appendChild(nameView);
         Entry.createElement('div', `s_${picture.id}`)
             .addClass('entryPlaygroundPictureSize')
-            .appendTo(
-                element
-            ).innerHTML = `${picture.dimension.width} X ${picture.dimension.height}`;
+            .appendTo(element).innerHTML = `${picture.dimension.width} X ${
+            picture.dimension.height
+        }`;
 
         const removeButton = Entry.createElement('div').addClass('entryPlayground_del');
         const { Buttons = {} } = Lang || {};
         const { delete: delText = '삭제' } = Buttons;
         removeButton.appendTo(element).innerText = delText;
-        removeButton.bindOnClick((e) => {
+        removeButton.bindOnClick(() => {
             try {
-                e.stopPropagation();
-                this._removePicture(picture, element);
+                if (Entry.playground.object.removePicture(picture.id)) {
+                    Entry.removeElement(element);
+                    Entry.dispatchEvent('removePicture', picture);
+                    Entry.toast.success(
+                        Lang.Workspace.shape_remove_ok,
+                        `${picture.name} ${Lang.Workspace.shape_remove_ok_msg}`
+                    );
+                } else {
+                    Entry.toast.alert(
+                        Lang.Workspace.shape_remove_fail,
+                        Lang.Workspace.shape_remove_fail_msg
+                    );
+                }
             } catch (e) {
                 Entry.toast.alert(
                     Lang.Workspace.shape_remove_fail,
@@ -1849,22 +1738,6 @@ Entry.Playground = class Playground {
                 );
             }
         });
-    }
-
-    _removePicture(picture, element) {
-        if (Entry.playground.object.pictures.length > 1) {
-            Entry.do('objectRemovePicture', picture.objectId, picture);
-            Entry.removeElement(element);
-            Entry.toast.success(
-                Lang.Workspace.shape_remove_ok,
-                `${picture.name} ${Lang.Workspace.shape_remove_ok_msg}`
-            );
-        } else {
-            Entry.toast.alert(
-                Lang.Workspace.shape_remove_fail,
-                Lang.Workspace.shape_remove_fail_msg
-            );
-        }
     }
 
     generateSoundElement(sound) {
@@ -1951,7 +1824,7 @@ Entry.Playground = class Playground {
                 isPlaying = true;
                 thumbnailView.removeClass('entryPlaygroundSoundPlay');
                 thumbnailView.addClass('entryPlaygroundSoundStop');
-                soundInstance = Entry.Utils.playSound(sound.id);
+                soundInstance = createjs.Sound.play(sound.id);
             }
 
             soundInstance.addEventListener('complete', () => {
@@ -1966,14 +1839,15 @@ Entry.Playground = class Playground {
             .appendTo(element);
         nameView.sound = sound;
         nameView.value = sound.name;
-
         Entry.attachEventListener(nameView, 'blur', nameViewBlur);
 
         function nameViewBlur() {
             if (this.value.trim() === '') {
-                return entrylms.alert(Lang.Workspace.enter_the_name).on('hide', () => {
-                    nameView.focus();
-                });
+                Entry.deAttachEventListener(this, 'blur', nameViewBlur);
+                entrylms.alert(Lang.Workspace.enter_the_name);
+                this.focus();
+                Entry.attachEventListener(this, 'blur', nameViewBlur);
+                return;
             }
 
             let nameViewArray = $('.entryPlaygroundSoundName');
@@ -1983,9 +1857,11 @@ Entry.Playground = class Playground {
 
             for (let i = 0; i < nameViewArray.length; i++) {
                 if (nameViewArray.eq(i).val() == nameView.value && nameViewArray[i] != this) {
-                    return entrylms.alert(Lang.Workspace.name_already_exists).on('hide', () => {
-                        nameView.focus();
-                    });
+                    Entry.deAttachEventListener(this, 'blur', nameViewBlur);
+                    entrylms.alert(Lang.Workspace.name_already_exists);
+                    this.focus();
+                    Entry.attachEventListener(this, 'blur', nameViewBlur);
+                    return;
                 }
             }
             const newValue = this.value;
@@ -2021,34 +1897,21 @@ Entry.Playground = class Playground {
     }
 
     openDropDown = (options, target, callback, closeCallback) => {
-        const containers = $('.entry-widget-dropdown');
-        if (containers.length > 0) {
-            closeCallback();
-            return containers.remove();
-        }
-
-        const container = Entry.Dom('div', {
-            class: 'entry-widget-dropdown',
-            parent: $('body'),
-        })[0];
-
         const dropdownWidget = new Dropdown({
             data: {
                 items: options,
                 positionDom: target,
-                outsideExcludeDom: [target],
                 onOutsideClick: () => {
                     if (dropdownWidget) {
                         closeCallback();
                         dropdownWidget.hide();
-                        dropdownWidget.remove();
-                    }
-                    if (container) {
-                        container.remove();
                     }
                 },
             },
-            container,
+            container: Entry.Dom('div', {
+                class: 'entry-widget-dropdown',
+                parent: $('body'),
+            })[0],
         }).on('select', (item) => {
             callback(item);
             closeCallback();
@@ -2058,35 +1921,21 @@ Entry.Playground = class Playground {
     };
 
     openColourPicker = (target, color, canTransparent, callback) => {
-        const containers = $('.entry-color-picker');
-        if (containers.length > 0) {
-            $(target).removeClass('on');
-            return containers.remove();
-        }
-        const container = Entry.Dom('div', {
-            class: 'entry-color-picker',
-            parent: $('body'),
-        })[0];
-        $(target).addClass('on');
         const colorPicker = new ColorPicker({
             data: {
                 color,
                 positionDom: target,
                 canTransparent,
-                outsideExcludeDom: [target],
                 onOutsideClick: (color) => {
                     if (colorPicker) {
-                        $(target).removeClass('on');
                         colorPicker.hide();
-                        colorPicker.remove();
-                    }
-
-                    if (container) {
-                        container.remove();
                     }
                 },
             },
-            container,
+            container: Entry.Dom('div', {
+                class: 'entry-color-picker',
+                parent: $('body'),
+            })[0],
         }).on('change', (color) => {
             if (color) {
                 callback(color, true);
@@ -2106,18 +1955,14 @@ Entry.Playground = class Playground {
     }
 
     setTextColour(colour) {
-        $('.imbtn_pop_font_color em').css('background-color', colour);
+        $('.style_link.imbtn_pop_font_color').toggleClass('on', colour !== '#000000');
         this.object.entity.setColour(colour);
         this.textEditArea.style.color = colour;
         this.textEditInput.style.color = colour;
     }
 
     setBackgroundColour(colour) {
-        $('.imbtn_pop_font_backgroundcolor em').css('background-color', colour);
-        $('.imbtn_pop_font_backgroundcolor').toggleClass(
-            'clear',
-            colour === 'transparent' || colour === '#ffffff'
-        );
+        $('.style_link.imbtn_pop_font_backgroundcolor').toggleClass('on', colour !== '#ffffff');
         this.object.entity.setBGColour(colour);
         this.textEditArea.style.backgroundColor = colour;
         this.textEditInput.style.backgroundColor = colour;
@@ -2161,6 +2006,39 @@ Entry.Playground = class Playground {
             blockMenu.banClass(block.name, true);
             blockMenu.banClass(`${block.name}_legacy`, true);
         });
+    }
+
+    updateHW() {
+        const blockMenu = _.result(this.mainWorkspace, 'blockMenu');
+        if (!blockMenu) {
+            return;
+        }
+
+        const hw = Entry.hw;
+        if (hw && hw.connected) {
+            blockMenu.banClass('arduinoDisconnected', true);
+
+            hw.banHW();
+
+            if (hw.hwModule) {
+                blockMenu.banClass('arduinoConnect', true);
+                blockMenu.unbanClass('arduinoConnected', true);
+                blockMenu.unbanClass(hw.hwModule.name);
+            } else {
+                blockMenu.banClass('arduinoConnected', true);
+                blockMenu.unbanClass('arduinoConnect', true);
+            }
+        } else {
+            blockMenu.banClass('arduinoConnected', true);
+            blockMenu.banClass('arduinoConnect', true);
+            blockMenu.unbanClass('arduinoDisconnected', true);
+
+            Entry.hw.banHW();
+        }
+
+        blockMenu.hwCodeOutdated = true;
+        blockMenu._generateHwCode(true);
+        blockMenu.reDraw();
     }
 
     toggleLineBreak(isLineBreak) {
@@ -2211,14 +2089,6 @@ Entry.Playground = class Playground {
         this.object.entity.setTextAlign(fontAlign);
     }
 
-    showPictureCurtain() {
-        this.pictureCurtainView_ && this.pictureCurtainView_.removeClass('entryRemove');
-    }
-
-    hidePictureCurtain() {
-        this.pictureCurtainView_ && this.pictureCurtainView_.addClass('entryRemove');
-    }
-
     hideBlockMenu() {
         this.mainWorkspace.getBlockMenu().hide();
     }
@@ -2264,13 +2134,12 @@ Entry.Playground = class Playground {
     }
 
     destroy() {
-        this.commentToggleButton_ && this.commentToggleButton_.unBindOnClick();
-        this.backPackButton_ && this.backPackButton_.unBindOnClick();
-        this.blockBackPackEvent && this.blockBackPackEvent.off();
-        this.blockBackPackAreaEvent && this.blockBackPackAreaEvent.off();
-        this.objectBackPackEvent && this.objectBackPackEvent.off();
-        this.objectBackPackAreaEvent && this.objectBackPackAreaEvent.off();
-        this.globalEvent && this.globalEvent.destroy();
+        this.commentToggleButton_.unBindOnClick();
+        this.backPackButton_.unBindOnClick();
+        this.blockBackPackEvent.off();
+        this.blockBackPackAreaEvent.off();
+        this.objectBackPackEvent.off();
+        this.objectBackPackAreaEvent.off();
         this._destroyer.destroy();
     }
 };

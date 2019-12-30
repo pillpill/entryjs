@@ -503,13 +503,11 @@ Entry.Board = class Board {
     }
 
     cancelEdit() {
-        Entry.disposeEvent.notify();
-        Entry.do('funcEditEnd', 'cancel');
+        Entry.do('funcEditCancel');
     }
 
     save() {
-        Entry.disposeEvent.notify();
-        Entry.do('funcEditEnd', 'save');
+        Entry.do('funcCreate');
     }
 
     generateCodeMagnetMap() {
@@ -1144,7 +1142,6 @@ Entry.Board = class Board {
 
     _initContextOptions() {
         const that = this;
-        const { options = {} } = Entry;
         this._contextOptions = [
             {
                 activated: true,
@@ -1213,7 +1210,7 @@ Entry.Board = class Board {
                 },
             },
             {
-                activated: !options.commentDisable,
+                activated: true,
                 option: {
                     text: Lang.Blocks.add_comment,
                     enable: !this.readOnly,
@@ -1232,7 +1229,7 @@ Entry.Board = class Board {
                 },
             },
             {
-                activated: !options.commentDisable,
+                activated: true,
                 option: {
                     text: Lang.Blocks.hide_all_comment,
                     enable: !this.readOnly,

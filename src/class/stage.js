@@ -4,9 +4,10 @@
  *
  */
 
+
 'use strict';
 
-import Extension from '../extensions/extension';
+import ColorSpoid from '../playground/colorSpoid';
 import { GEHelper } from '../graphicEngine/GEHelper';
 import { GEHandle } from '../graphicEngine/GEHandle';
 import { PIXIAtlasManager } from './pixi/atlas/PIXIAtlasManager';
@@ -43,8 +44,8 @@ Entry.Stage.prototype.initStage = function(canvas) {
 
     this.background = GEHelper.newGraphic();
     this.background.graphics.beginFill('#ffffff').drawRect(-480, -240, 960, 480);
-    this.variableContainer = GEHelper.newContainer('variableContainer');
-    this.dialogContainer = GEHelper.newContainer('dialogContainer');
+    this.variableContainer = GEHelper.newContainer("variableContainer");
+    this.dialogContainer = GEHelper.newContainer("dialogContainer");
 
     this.canvas.addChild(this.background);
     this.canvas.addChild(this.variableContainer);
@@ -54,7 +55,7 @@ Entry.Stage.prototype.initStage = function(canvas) {
     this.initHandle();
     this.mouseCoordinate = { x: 0, y: 0 };
 
-    const _addEventListener = Entry.addEventListener.bind(Entry);
+    var _addEventListener = Entry.addEventListener.bind(Entry);
 
     if (Entry.isPhone()) {
         canvas.ontouchstart = function(e) {
@@ -66,7 +67,7 @@ Entry.Stage.prototype.initStage = function(canvas) {
             Entry.dispatchEvent('canvasClickCanceled', e);
         };
     } else {
-        const downFunc = function(e) {
+        var downFunc = function(e) {
             Entry.dispatchEvent('canvasClick', e);
             Entry.stage.isClick = true;
         };
@@ -74,7 +75,7 @@ Entry.Stage.prototype.initStage = function(canvas) {
         canvas.onmousedown = downFunc;
         canvas.ontouchstart = downFunc;
 
-        const upFunc = function(e) {
+        var upFunc = function(e) {
             Entry.stage.isClick = false;
             Entry.dispatchEvent('canvasClickCanceled', e);
         };
@@ -91,7 +92,7 @@ Entry.Stage.prototype.initStage = function(canvas) {
     _addEventListener('loadComplete', this.sortZorder.bind(this));
     Entry.windowResized.attach(this, this.updateBoundRect.bind(this));
 
-    const razyScroll = _.debounce(() => {
+    var razyScroll = _.debounce(() => {
         Entry.windowResized.notify();
     }, 200);
 
@@ -99,11 +100,11 @@ Entry.Stage.prototype.initStage = function(canvas) {
         window.requestAnimationFrame(razyScroll);
     });
 
-    const moveFunc = function(e) {
+    var moveFunc = function(e) {
         e.preventDefault();
-        const { pageX, pageY } = Entry.Utils.convertMouseEvent(e);
-        const roundRect = Entry.stage.getBoundRect();
-        const scrollPos = Entry.Utils.getScrollPos();
+        var { pageX, pageY } = Entry.Utils.convertMouseEvent(e);
+        var roundRect = Entry.stage.getBoundRect();
+        var scrollPos = Entry.Utils.getScrollPos();
         this.mouseCoordinate = {
             x: Entry.Utils.toFixed(
                 ((pageX - roundRect.left - scrollPos.left) / roundRect.width - 0.5) * 480
@@ -119,17 +120,17 @@ Entry.Stage.prototype.initStage = function(canvas) {
     canvas.ontouchmove = moveFunc;
 
     canvas.onmouseout = () => Entry.dispatchEvent('stageMouseOut');
-    const updateObjectFunc = () => {
-        if (Entry.engine.isState('stop')) {
-            Entry.stage.updateObject();
-        }
-    };
     _addEventListener('updateObject', updateObjectFunc);
     _addEventListener('run', () => Entry.removeEventListener('updateObject', updateObjectFunc));
     _addEventListener('stop', () => _addEventListener('updateObject', updateObjectFunc));
+
+    var updateObjectFunc = () => {
+        if (Entry.engine.isState('stop')) Entry.stage.updateObject();
+    };
+
     _addEventListener('canvasInputComplete', () => {
         try {
-            const inputValue = this.inputField.value();
+            var inputValue = this.inputField.value();
             this.hideInputField();
             if (inputValue) {
                 ((c) => {
@@ -142,14 +143,12 @@ Entry.Stage.prototype.initStage = function(canvas) {
 
     this.initWall();
     this.render();
-    this.dropper = Extension.getExtension('Dropper');
+    this.colorSpoid = new ColorSpoid(this, canvas);
 };
 
 Entry.Stage.prototype.render = function stageRender() {
-    if (Entry.stage.timer) {
-        clearTimeout(Entry.stage.timer);
-    }
-    let time = _.now();
+    if (Entry.stage.timer) clearTimeout(Entry.stage.timer);
+    var time = _.now();
     Entry.stage.update();
     time = _.now() - time;
     Entry.stage.timer = setTimeout(stageRender, 16 - (time % 16) + 16 * Math.floor(time / 16));
@@ -159,9 +158,7 @@ Entry.Stage.prototype.render = function stageRender() {
  * redraw canvas
  */
 Entry.Stage.prototype.update = function() {
-    if (Entry.type === 'invisible') {
-        return;
-    }
+    if (Entry.type === 'invisible') return;
 
     if (!Entry.requestUpdate) {
         Entry.requestUpdate = false;
@@ -173,15 +170,10 @@ Entry.Stage.prototype.update = function() {
         this.objectUpdated = false;
     }
 
-    const inputField = this.inputField;
-    if (inputField && !inputField._isHidden) {
-        inputField.render();
-    }
-    if (Entry.requestUpdateTwice) {
-        Entry.requestUpdateTwice = false;
-    } else {
-        Entry.requestUpdate = false;
-    }
+    var inputField = this.inputField;
+    if (inputField && !inputField._isHidden) inputField.render();
+    if (Entry.requestUpdateTwice) Entry.requestUpdateTwice = false;
+    else Entry.requestUpdate = false;
 };
 
 Entry.Stage.prototype.updateForce = function() {
@@ -203,12 +195,9 @@ Entry.Stage.prototype.loadObject = function({ entity: { object }, scene }) {
  * @param {Entry.EntityObject} entity
  */
 Entry.Stage.prototype.loadEntity = function({ parent, object }, index) {
-    const objContainer = Entry.stage.getObjectContainerByScene(parent.scene);
-    if (index > -1) {
-        objContainer.addChildAt(object, index);
-    } else {
-        objContainer.addChild(object);
-    }
+    var objContainer = Entry.stage.getObjectContainerByScene(parent.scene);
+    if (index > -1) objContainer.addChildAt(object, index);
+    else objContainer.addChild(object);
     Entry.requestUpdate = true;
 };
 
@@ -260,10 +249,10 @@ Entry.Stage.prototype.setEntityIndex = function({ object }, index) {
     if (index === -1) {
         return;
     }
-    const selectedObjectContainer = Entry.stage.selectedObjectContainer;
-    const currentIndex = selectedObjectContainer.getChildIndex(object);
+    var selectedObjectContainer = Entry.stage.selectedObjectContainer;
+    var currentIndex = selectedObjectContainer.getChildIndex(object);
 
-    if (currentIndex === -1 || currentIndex === index) {
+    if (currentIndex === -1 ||  currentIndex === index) {
         return;
     }
     selectedObjectContainer.setChildIndex(object, index);
@@ -274,17 +263,13 @@ Entry.Stage.prototype.setEntityIndex = function({ object }, index) {
  * sort Z index of objects
  */
 Entry.Stage.prototype.sortZorder = function() {
-    let objects = Entry.container.getCurrentObjects().slice(),
+    var objects = Entry.container.getCurrentObjects().slice(),
         length = objects.length,
         container = this.selectedObjectContainer,
         index = 0;
 
-    if (container) {
-        container.children.length = length;
-    }
-
-    for (let i = length - 1; i >= 0; i--) {
-        const {
+    for (var i = length - 1; i >= 0; i--) {
+        var {
             entity: { object },
         } = objects[i];
         container.setChildIndex(object, index++);
@@ -304,7 +289,7 @@ Entry.Stage.prototype.sortZorderRun = function() {
  * Initialize coordinate on canvas. It is toggle by Engine.
  */
 Entry.Stage.prototype.initCoordinator = function() {
-    const tex = GEHelper.newSpriteWithCallback(`${Entry.mediaFilePath}workspace_coordinate.png`);
+    let tex = GEHelper.newSpriteWithCallback(Entry.mediaFilePath + 'workspace_coordinate.png');
     this.coordinator = Object.assign(tex, {
         scaleX: 0.5,
         scaleY: 0.5,
@@ -312,7 +297,7 @@ Entry.Stage.prototype.initCoordinator = function() {
         y: -135,
         visible: false,
     });
-    if (!GEHelper.isWebGL) {
+    if(!GEHelper.isWebGL) {
         this.coordinator.tickEnabled = false;
     }
     this.canvas.addChild(this.coordinator);
@@ -332,11 +317,8 @@ Entry.Stage.prototype.toggleCoordinator = function() {
  */
 Entry.Stage.prototype.selectObject = function(object) {
     //todo
-    if (!object) {
-        this.selectedObject = null;
-    } else {
-        this.selectedObject = object;
-    }
+    if (!object) this.selectedObject = null;
+    else this.selectedObject = object;
     this.updateObject();
 };
 
@@ -360,17 +342,15 @@ Entry.Stage.prototype.updateObject = function() {
     }
     Entry.requestUpdate = true;
     this.handle.setDraggable(true);
-    if (this.editEntity) {
-        return;
-    }
-    const object = this.selectedObject;
+    if (this.editEntity) return;
+    var object = this.selectedObject;
     if (object) {
         if (object.objectType == 'textBox') {
             this.handle.toggleCenter(false);
         } else {
             this.handle.toggleCenter(true);
         }
-        const rotateMethod = object.getRotateMethod();
+        var rotateMethod = object.getRotateMethod();
         if (rotateMethod == 'free') {
             this.handle.toggleRotation(true);
             this.handle.toggleDirection(true);
@@ -391,17 +371,17 @@ Entry.Stage.prototype.updateObject = function() {
             this.handle.toggleResize(true);
         }
         this.handle.setVisible(true);
-        const entity = object.entity;
+        var entity = object.entity;
         this.handle.setWidth(entity.getScaleX() * entity.getWidth());
         this.handle.setHeight(entity.getScaleY() * entity.getHeight());
-        let regX, regY;
+        var regX, regY;
         if (entity.type == 'textBox') {
             // maybe 0.
             if (entity.getLineBreak()) {
                 regX = entity.regX * entity.scaleX;
                 regY = -entity.regY * entity.scaleY;
             } else {
-                const fontAlign = entity.getTextAlign();
+                var fontAlign = entity.getTextAlign();
                 regY = -entity.regY * entity.scaleY;
                 switch (fontAlign) {
                     case Entry.TEXT_ALIGN_LEFT:
@@ -420,7 +400,7 @@ Entry.Stage.prototype.updateObject = function() {
             regY = (entity.height / 2 - entity.regY) * entity.scaleY;
         }
 
-        const rotation = (entity.getRotation() / 180) * Math.PI;
+        var rotation = (entity.getRotation() / 180) * Math.PI;
 
         this.handle.setX(entity.getX() - regX * Math.cos(rotation) - regY * Math.sin(rotation));
         this.handle.setY(-entity.getY() - regX * Math.sin(rotation) + regY * Math.cos(rotation));
@@ -443,26 +423,22 @@ Entry.Stage.prototype.updateObject = function() {
 // handle -> object
 Entry.Stage.prototype.updateHandle = function() {
     this.editEntity = true;
-    const handle = this.handle;
-    const entity = this.selectedObject.entity;
+    var handle = this.handle;
+    var entity = this.selectedObject.entity;
     if (entity.lineBreak) {
         entity.setHeight(handle.height / entity.getScaleY());
         entity.setWidth(handle.width / entity.getScaleX());
     } else {
         if (entity.width !== 0) {
-            let scaleX = Math.abs(handle.width / entity.width);
-            if (entity.flip) {
-                scaleX *= -1;
-            }
+            var scaleX = Math.abs(handle.width / entity.width);
+            if (entity.flip) scaleX *= -1;
 
             entity.setScaleX(scaleX);
         }
 
-        if (entity.height !== 0) {
-            entity.setScaleY(handle.height / entity.height);
-        }
+        if (entity.height !== 0) entity.setScaleY(handle.height / entity.height);
     }
-    const direction = (handle.rotation / 180) * Math.PI;
+    var direction = (handle.rotation / 180) * Math.PI;
     if (entity.type == 'textBox') {
         entity.syncFont();
         var newRegX = handle.regX / entity.scaleX;
@@ -505,36 +481,37 @@ Entry.Stage.prototype.updateHandle = function() {
 };
 
 Entry.Stage.prototype.startEdit = function() {
-    const { entity } = this.selectedObject || {};
+    var { entity } = this.selectedObject || {};
     _.result(entity, 'initCommand');
 };
 
 Entry.Stage.prototype.endEdit = function() {
-    const { entity } = this.selectedObject || {};
+    var { entity } = this.selectedObject || {};
     _.result(entity, 'checkCommand');
 };
 
 Entry.Stage.prototype.initWall = function() {
-    const wall = GEHelper.newContainer('wall');
+    let wall = GEHelper.newContainer("wall");
     wall.mouseEnabled = false;
-    const tex = GEHelper.newWallTexture(`${Entry.mediaFilePath}media/bound.png`);
+    let tex = GEHelper.newWallTexture(Entry.mediaFilePath + 'media/bound.png');
     const newSide = (x, y, sx, sy) => {
-        const sp = GEHelper.newWallSprite(tex);
+        let sp = GEHelper.newWallSprite(tex);
         sp.x = x;
         sp.y = y;
-        sx ? (sp.scaleX = sx) : 0;
-        sy ? (sp.scaleY = sy) : 0;
+        sx ?  sp.scaleX = sx : 0;
+        sy ?  sp.scaleY = sy : 0;
         wall.addChild(sp);
         return sp;
     };
 
-    wall.up = newSide(-240, -135 - 30, 480 / 30, 0);
-    wall.down = newSide(-240, 135, 480 / 30, 0);
-    wall.right = newSide(240, -135, 0, 270 / 30);
-    wall.left = newSide(-240 - 30, -135, 0, 270 / 30);
+    wall.up = newSide( -240, -135 - 30, 480 / 30, 0);
+    wall.down = newSide( -240, 135, 480 / 30, 0);
+    wall.right = newSide( 240, -135, 0, 270 / 30);
+    wall.left = newSide( -240 - 30, -135, 0, 270 / 30);
 
     this.canvas.addChild(wall);
     this.wall = wall;
+
 };
 
 /**
@@ -544,13 +521,13 @@ Entry.Stage.prototype.showInputField = function() {
     const THIS = this;
     const isWebGL = GEHelper.isWebGL;
 
-    if (!this.inputField) {
+    if(!this.inputField) {
         this.inputField = _createInputField();
         this.inputSubmitButton = _createSubmitButton();
     }
 
     this.inputField.value('');
-    if (isWebGL) {
+    if(isWebGL) {
         this.canvas.addChild(this.inputField.getPixiView());
     }
     this.inputField.show();
@@ -559,15 +536,15 @@ Entry.Stage.prototype.showInputField = function() {
     Entry.requestUpdateTwice = true;
 
     function _createInputField() {
-        const scale = 1 / 1.5;
-        const posX = 202 * scale;
-        const posY = 450 * scale;
+        let scale = 1 / 1.5;
+        let posX = 202 * scale;
+        let posY = 450 * scale;
         const isWebGL = GEHelper.isWebGL;
         const classRef = isWebGL ? window.PIXICanvasInput : CanvasInput;
-        const inputField = new classRef({
+        let inputField = new classRef({
             canvas: document.getElementById('entryCanvas'),
             fontSize: 30 * scale,
-            fontFamily: EntryStatic.fontFamily || 'NanumGothic',
+            fontFamily: 'NanumGothic',
             fontColor: '#212121',
             width: Math.round(556 * scale),
             height: 26 * scale,
@@ -581,28 +558,28 @@ Entry.Stage.prototype.showInputField = function() {
             y: posY,
             readonly: false,
             topPosition: true,
-            onsubmit() {
+            onsubmit: function() {
                 Entry.dispatchEvent('canvasInputComplete');
             },
         });
 
-        if (isWebGL) {
+        if(isWebGL) {
             const canvas = THIS.canvas;
             const globalScale = canvas.scale.x;
             const textView = inputField.getPixiView();
-            textView.scale.set(1 / globalScale);
+            textView.scale.set(1/globalScale);
             textView.position.set(
-                posX / globalScale - canvas.x / globalScale,
-                posY / globalScale - canvas.y / globalScale
+                (posX / globalScale - canvas.x / globalScale),
+                (posY / globalScale - canvas.y / globalScale),
             );
         }
         return inputField;
-    } //_createInputField
+    }//_createInputField
+
 
     function _createSubmitButton() {
-        const { confirm_button } = EntryStatic.images || {};
-        const path = confirm_button || `${Entry.mediaFilePath}confirm_button.png`;
-        const inputSubmitButton = GEHelper.newSpriteWithCallback(path, () => {
+        const path = Entry.mediaFilePath + 'confirm_button.png';
+        let inputSubmitButton = GEHelper.newSpriteWithCallback(path, ()=>{
             Entry.requestUpdate = true;
         });
         inputSubmitButton.mouseEnabled = true;
@@ -612,25 +589,23 @@ Entry.Stage.prototype.showInputField = function() {
         inputSubmitButton.y = 89;
         inputSubmitButton.cursor = 'pointer';
 
-        const eventType = isWebGL ? 'pointerdown' : 'mousedown';
+        let eventType = isWebGL ? 'pointerdown' : 'mousedown';
         inputSubmitButton.on(eventType, () => {
             if (!THIS.inputField._readonly) {
                 Entry.dispatchEvent('canvasInputComplete');
             }
         });
         return inputSubmitButton;
-    } //_createSubmitButton
+    }//_createSubmitButton
 };
 
 /**
  * remove inputfield from the canvas
  */
 Entry.Stage.prototype.hideInputField = function() {
-    if (!this.inputField) {
-        return;
-    }
+    if(!this.inputField) return;
 
-    if (GEHelper.isWebGL) {
+    if(GEHelper.isWebGL) {
         this.canvas.removeChild(this.inputField.getPixiView());
     }
     this.inputField.value('');
@@ -645,20 +620,18 @@ Entry.Stage.prototype.hideInputField = function() {
  * init object containers
  */
 Entry.Stage.prototype.initObjectContainers = function() {
-    const scenes = Entry.scene.scenes_;
+    var scenes = Entry.scene.scenes_;
     if (!_.isEmpty(scenes)) {
-        for (let i = 0; i < scenes.length; i++) {
+        for (var i = 0; i < scenes.length; i++) {
             this.objectContainers[i] = this.createObjectContainer(scenes[i]);
         }
         this.selectedObjectContainer = this.objectContainers[0];
     } else {
-        const obj = this.createObjectContainer(Entry.scene.selectedScene);
+        var obj = this.createObjectContainer(Entry.scene.selectedScene);
         this.objectContainers.push(obj);
         this.selectedObjectContainer = obj;
     }
-    if (Entry.type !== 'invisible') {
-        this.canvas.addChild(this.selectedObjectContainer);
-    }
+    if (Entry.type !== 'invisible') this.canvas.addChild(this.selectedObjectContainer);
     this.selectObjectContainer(Entry.scene.selectedScene);
 };
 
@@ -667,14 +640,14 @@ Entry.Stage.prototype.initObjectContainers = function() {
  * @param {Entry.Scene} scene
  */
 Entry.Stage.prototype.selectObjectContainer = function(scene) {
-    const containers = this.objectContainers;
-    const canvas = this.canvas;
+    var containers = this.objectContainers;
+    var canvas = this.canvas;
 
     if (_.isEmpty(canvas) || _.isEmpty(containers)) {
         return;
     }
     GEHelper.resManager.activateScene(scene && scene.id);
-    const newContainer = this.getObjectContainerByScene(scene);
+    var newContainer = this.getObjectContainerByScene(scene);
 
     containers.forEach(canvas.removeChild.bind(canvas));
 
@@ -686,7 +659,7 @@ Entry.Stage.prototype.selectObjectContainer = function(scene) {
  * init object containers
  */
 Entry.Stage.prototype.createObjectContainer = function(scene) {
-    return Object.assign(GEHelper.newContainer('[Stage] SceneContainer'), { scene });
+    return Object.assign(GEHelper.newContainer("[Stage] SceneContainer"), { scene });
 };
 
 /**
@@ -694,9 +667,9 @@ Entry.Stage.prototype.createObjectContainer = function(scene) {
  * @param {scene model} scene
  */
 Entry.Stage.prototype.removeObjectContainer = function(scene) {
-    const containers = this.objectContainers;
-    const objContainer = this.getObjectContainerByScene(scene);
-    const canvas = this.canvas;
+    var containers = this.objectContainers;
+    var objContainer = this.getObjectContainerByScene(scene);
+    var canvas = this.canvas;
     if (canvas) {
         canvas.removeChild(objContainer);
     }
@@ -713,14 +686,14 @@ Entry.Stage.prototype.getObjectContainerByScene = function({ id }) {
 };
 
 Entry.Stage.prototype.moveSprite = function({ shiftKey, keyCode }) {
-    const selectedObject = this.selectedObject;
+    var selectedObject = this.selectedObject;
     if (!selectedObject || !Entry.stage.focused || selectedObject.getLock()) {
         return;
     }
 
-    const distance = shiftKey ? 1 : 5;
+    var distance = shiftKey ? 1 : 5;
 
-    const entity = selectedObject.entity;
+    var entity = selectedObject.entity;
     switch (keyCode) {
         case 38: //up
             entity.setY(entity.getY() + distance);
@@ -739,9 +712,7 @@ Entry.Stage.prototype.moveSprite = function({ shiftKey, keyCode }) {
 };
 
 Entry.Stage.prototype.getBoundRect = function(e) {
-    if (!this._boundRect) {
-        return this.updateBoundRect();
-    }
+    if (!this._boundRect) return this.updateBoundRect();
     return this._boundRect;
 };
 
@@ -750,10 +721,8 @@ Entry.Stage.prototype.updateBoundRect = function(e) {
 };
 
 Entry.Stage.prototype.getDom = function(query) {
-    const key = query.shift();
-    if (key === 'canvas') {
-        return this.canvas.canvas;
-    }
+    var key = query.shift();
+    if (key === 'canvas') return this.canvas.canvas;
 };
 
 Entry.Stage.prototype.setEntitySelectable = function(value) {
@@ -761,23 +730,21 @@ Entry.Stage.prototype.setEntitySelectable = function(value) {
 };
 
 Entry.Stage.prototype.isEntitySelectable = function() {
-    return Entry.engine.isState('stop') && this._entitySelectable && !this.dropper.isShow;
+    return Entry.engine.isState('stop') && this._entitySelectable && !this.colorSpoid.isRunning;
 };
 
 Entry.Stage.prototype.destroy = function() {
     let destroyOption;
-    if (GEHelper.isWebGL) {
-        destroyOption = { children: true, texture: false, baseTexture: false };
-        this.objectContainers.forEach((c) => c.destroy(destroyOption));
+    if(GEHelper.isWebGL) {
+        destroyOption = {children: true, texture: false, baseTexture: false};
+        this.objectContainers.forEach( c => c.destroy(destroyOption) );
         //this.handle.destroy(); // 추상화 아직 안됨.
         PIXIAtlasManager.clearProject();
     } else {
         //do nothing
     }
-    if (this._app) {
-        this._app.destroy(destroyOption);
-        this._app = null;
-    }
+    this._app.destroy(destroyOption);
+    this._app = null;
     this.handle = null;
     this.objectContainers = null;
 };

@@ -43,7 +43,7 @@ class Executor {
                     returnVal = Entry.STATIC.BREAK;
                 } else if (this.isFuncExecutor) {
                     //function executor
-                    throw e;
+                    throw new Error();
                 } else {
                     Entry.Utils.stopProjectWithToast(this.scope, undefined, e);
                 }

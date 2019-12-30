@@ -2,21 +2,7 @@
 
 const PromiseManager = require('../../core/promiseManager');
 const { callApi } = require('../../util/common');
-
-/**
- * 비공식으로 엔트리에서 사용되고 있는 언어코드 (vn, ja)의 경우 공식 언어코드로 치환한다.
- * @param {string}originalLanguage
- */
-function replaceLanguageCode(originalLanguage) {
-    switch (originalLanguage) {
-        case 'jp':
-            return 'ja';
-        case 'vn':
-            return 'vi';
-        default:
-            return originalLanguage;
-    }
-}
+const _uniqueId = require('lodash/uniqueId');
 
 function getInitialCodeMap() {
     return {
@@ -153,7 +139,6 @@ function getInitialCodeMap() {
         },
     };
 }
-
 Entry.EXPANSION_BLOCK.translate = {
     name: 'translate',
     imageName: 'papago.png',
@@ -201,33 +186,25 @@ Entry.EXPANSION_BLOCK.translate.getBlocks = function() {
             return param;
         },
         getSourceLang(isPython) {
-            const value = replaceLanguageCode(Lang.type);
-            const options = [
-                [Lang.Blocks.korean, 'ko'],
-                [Lang.Blocks.english, 'en'],
-                [Lang.Blocks.japan, 'ja'],
-                [Lang.Blocks.chinese_simplified, 'zh-CN'],
-                [Lang.Blocks.chinese_traditional, 'zh-TW'],
-                [Lang.Blocks.spanish, 'es'],
-                [Lang.Blocks.french, 'fr'],
-                [Lang.Blocks.german, 'de'],
-                [Lang.Blocks.russian, 'ru'],
-                [Lang.Blocks.portuguese, 'pt'],
-                [Lang.Blocks.thai, 'th'],
-                [Lang.Blocks.vietnamese, 'vi'],
-                [Lang.Blocks.indonesian, 'id'],
-                [Lang.Blocks.hindi, 'hi'],
-            ];
-            const index = _.findIndex(options, (x) => x[1] === value);
-            if (index > 0) {
-                const temp = options[index];
-                options[index] = options[0];
-                options[0] = temp;
-            }
             const param = {
                 type: 'Dropdown',
-                options,
-                value,
+                options: [
+                    [Lang.Blocks.korean, 'ko'],
+                    [Lang.Blocks.english, 'en'],
+                    [Lang.Blocks.japan, 'ja'],
+                    [Lang.Blocks.chinese_simplified, 'zh-CN'],
+                    [Lang.Blocks.chinese_traditional, 'zh-TW'],
+                    [Lang.Blocks.spanish, 'es'],
+                    [Lang.Blocks.french, 'fr'],
+                    [Lang.Blocks.german, 'de'],
+                    [Lang.Blocks.russian, 'ru'],
+                    [Lang.Blocks.portuguese, 'pt'],
+                    [Lang.Blocks.thai, 'th'],
+                    [Lang.Blocks.vietnamese, 'vi'],
+                    [Lang.Blocks.indonesian, 'id'],
+                    [Lang.Blocks.hindi, 'hi'],
+                ],
+                value: 'ko',
                 fontSize: 11,
                 bgColor: EntryStatic.colorSet.block.darken.EXPANSION,
                 arrowColor: EntryStatic.colorSet.common.WHITE,
@@ -244,17 +221,17 @@ Entry.EXPANSION_BLOCK.translate.getBlocks = function() {
                 menuName(value) {
                     const langCodeMap = getInitialCodeMap();
                     if (value) {
-                        const convertedLangCode = replaceLanguageCode(value);
-                        return langCodeMap[convertedLangCode].sub.map((code) => [
-                            langCodeMap[code].lang,
-                            code,
-                        ]);
+                        return langCodeMap[value].sub.map((code) => {
+                            return [langCodeMap[code].lang, code];
+                        });
                     }
 
                     if (this._contents.options) {
                         return this._contents.options;
                     } else {
-                        return langCodeMap.ko.sub.map((code) => [langCodeMap[code].lang, code]);
+                        return langCodeMap.ko.sub.map((code) => {
+                            return [langCodeMap[code].lang, code];
+                        });
                     }
                 },
                 targetIndex,
@@ -286,7 +263,7 @@ Entry.EXPANSION_BLOCK.translate.getBlocks = function() {
         params.projectId = getProjectId();
         const key = `translate-${type}${JSON.stringify(params)}`;
         return new PromiseManager()
-            .Promise((resolve) => {
+            .Promise(function(resolve) {
                 callApi(key, {
                     url: `${Entry.EXPANSION_BLOCK.translate.api}translate/${type}`,
                     params,
@@ -297,15 +274,19 @@ Entry.EXPANSION_BLOCK.translate.getBlocks = function() {
                         }
                         return resolve(defaultValue);
                     })
-                    .catch(() => resolve(defaultValue));
+                    .catch(() => {
+                        return resolve(defaultValue);
+                    });
             })
-            .catch(() => defaultValue);
+            .catch(() => {
+                return defaultValue;
+            });
     };
 
     const checkLang = (query, defaultValue) => {
         const langCodeMap = getInitialCodeMap();
         return new PromiseManager()
-            .Promise((resolve) => {
+            .Promise(function(resolve) {
                 callApi(`translate-detect-${query}`, {
                     url: `${Entry.EXPANSION_BLOCK.translate.api}dect/langs`,
                     params: { query, projectId: getProjectId() },
@@ -320,9 +301,13 @@ Entry.EXPANSION_BLOCK.translate.getBlocks = function() {
                         }
                         return resolve(defaultValue);
                     })
-                    .catch(() => resolve(defaultValue));
+                    .catch(() => {
+                        return resolve(defaultValue);
+                    });
             })
-            .catch(() => defaultValue);
+            .catch(() => {
+                return defaultValue;
+            });
     };
 
     const checkText = function(text) {
@@ -349,12 +334,12 @@ Entry.EXPANSION_BLOCK.translate.getBlocks = function() {
     return {
         translate_title: {
             skeleton: 'basic_text',
-            color: EntryStatic.colorSet.common.TRANSPARENT,
+            color: '#ecf8ff',
             params: [
                 {
                     type: 'Text',
                     text: Lang.template.translate_title_text,
-                    color: EntryStatic.colorSet.common.TEXT,
+                    color: '#333',
                     align: 'center',
                 },
             ],

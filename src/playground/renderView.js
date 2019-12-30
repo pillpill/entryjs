@@ -187,7 +187,7 @@ Entry.RenderView = class RenderView {
             }
 
             $(this.svg).css({
-                width: width + this._getHorizontalPadding() - this._minBlockOffsetX + 5,
+                width: width + this._getHorizontalPadding() - this._minBlockOffsetX,
                 height: height + 5,
             });
 

@@ -1,6 +1,5 @@
 'use strict';
 
-const _includes = require('lodash/includes');
 const hardware = require('./hardware/index');
 const _union = require('lodash/union');
 const _flatten = require('lodash/flatten');
@@ -25,7 +24,6 @@ require('./block_expansion_festival');
 require('./block_expansion_translate');
 require('./block_expansion_behaviorconduct_disaster');
 require('./block_expansion_behaviorconduct_lifesafety');
-require('./block_expansion_tts');
 
 Entry.EXPANSION_BLOCK_LIST = {
     weather: Entry.Expansion_Weather,
@@ -33,7 +31,6 @@ Entry.EXPANSION_BLOCK_LIST = {
     translate: Entry.EXPANSION_BLOCK.translate,
     behaviorConductDisaster: Entry.EXPANSION_BLOCK.behaviorConductDisaster,
     behaviorConductLifeSafety: Entry.EXPANSION_BLOCK.behaviorConductLifeSafety,
-    tts: Entry.EXPANSION_BLOCK.tts,
 };
 
 function getBlockObject(items) {

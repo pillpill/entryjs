@@ -3,12 +3,12 @@ module.exports = {
         return {
             variableAddButton: {
                 skeleton: 'basic_button',
-                color: EntryStatic.colorSet.common.BUTTON_BACKGROUND,
+                color: '#eee',
                 params: [
                     {
                         type: 'Text',
                         text: Lang.Workspace.variable_create,
-                        color: EntryStatic.colorSet.common.BUTTON,
+                        color: '#4f80ff',
                         align: 'center',
                     },
                 ],
@@ -26,12 +26,12 @@ module.exports = {
             },
             listAddButton: {
                 skeleton: 'basic_button',
-                color: EntryStatic.colorSet.common.BUTTON_BACKGROUND,
+                color: '#eee',
                 params: [
                     {
                         type: 'Text',
                         text: Lang.Workspace.create_list_block,
-                        color: EntryStatic.colorSet.common.BUTTON,
+                        color: '#4f80ff',
                         align: 'center',
                     },
                 ],

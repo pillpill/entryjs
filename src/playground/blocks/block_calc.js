@@ -545,7 +545,7 @@ module.exports = {
                 class: 'calc',
                 isNotFor: [],
                 func() {
-                    return Entry.Utils.getVolume() * 100;
+                    return createjs.Sound.getVolume() * 100;
                 },
                 syntax: {
                     js: [],
