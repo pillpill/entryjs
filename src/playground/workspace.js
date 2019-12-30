@@ -179,7 +179,7 @@ Entry.Workspace = class Workspace {
         switch (this.mode) {
             case WORKSPACE.MODE_VIMBOARD: {
                 const alertMessage =
-                    Util.validateVariableToPython() ||
+                    Util.validateVariableAndListToPython() ||
                     Util.validateFunctionToPython() ||
                     Util.hasExpansionBlocks();
 
@@ -195,6 +195,7 @@ Entry.Workspace = class Workspace {
                     if (alertMessage.type === 'warning') {
                         entrylms.confirm(alertMessage.message).then((result) => {
                             if (result) {
+                                //Entry.expansion.banExpansionBlocks(Entry.expansionBlocks);
                                 changeToPythonMode();
                                 dispatchChangeBoardEvent();
                             } else {
@@ -420,11 +421,12 @@ Entry.Workspace = class Workspace {
                     return;
                 }
             }
-
+            const mainWorksapceMode = Entry.playground.mainWorkspace.getMode();
+            const playgroundMode = Entry.playground.getViewMode();
             const isBlockCodeView =
-                Entry.playground.mainWorkspace.getMode() === Entry.Workspace.MODE_BOARD &&
-                (Entry.playground.getViewMode() === 'code' ||
-                    Entry.playground.getViewMode() === 'variable');
+                (mainWorksapceMode === Entry.Workspace.MODE_OVERLAYBOARD ||
+                    mainWorksapceMode === Entry.Workspace.MODE_BOARD) &&
+                (playgroundMode === 'code' || playgroundMode === 'variable');
             switch (keyCode) {
                 case 86: //paste
                     if (
@@ -586,8 +588,7 @@ Entry.Workspace = class Workspace {
 
         function checkObjectAndAlert(object, message) {
             if (!object) {
-                message =
-                    message || '오브젝트가 존재하지 않습니다. 오브젝트를 추가한 후 시도해주세요.';
+                message = message || Lang.Workspace.object_not_exist_error;
                 entrylms.alert(message);
                 return false;
             }

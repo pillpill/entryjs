@@ -6,6 +6,9 @@
 
 import { Destroyer } from './destroyer/Destroyer';
 import { GEHelper } from '../graphicEngine/GEHelper';
+import Expansion from '../class/Expansion';
+import Extension from '../extensions/extension';
+
 require('./utils');
 
 /**
@@ -37,6 +40,7 @@ Entry.init = function(container, options) {
         options.libDir ? options.libDir : '/lib'
     }/literallycanvas-mobile/lib/img`;
     this.defaultPath = options.defaultDir || '';
+    this.soundPath = options.soundDir || '';
     this.blockInjectPath = options.blockInjectDir || '';
 
     if (this.type === 'workspace' && this.isPhone()) {
@@ -61,6 +65,8 @@ Entry.init = function(container, options) {
             console.log('not exist theme!', e);
         }
     }
+
+    Entry.paintMode = options.paintMode || 'literallycanvas';
     this.createDom(container, this.type);
     this.loadInterfaceState();
     this.overridePrototype();
@@ -79,11 +85,11 @@ Entry.init = function(container, options) {
     };
     window.onbeforeunload = this.beforeUnload;
 
-    Entry.addEventListener('saveWorkspace', function() {
+    Entry.addEventListener('saveWorkspace', () => {
         Entry.addActivity('save');
     });
 
-    Entry.addEventListener('showBlockHelper', function() {
+    Entry.addEventListener('showBlockHelper', () => {
         Entry.propertyPanel.select('helper');
     });
 
@@ -98,6 +104,27 @@ Entry.init = function(container, options) {
     Entry.soundQueue = new createjs.LoadQueue();
     Entry.soundQueue.installPlugin(createjs.Sound);
     Entry.soundInstances = [];
+    Entry.soundQueue.urls = new Set();
+    Entry.soundQueue.total = 0;
+    Entry.soundQueue.loadCallback = (src) => {
+        if (!Entry.soundQueue.urls.has(src)) {
+            return;
+        }
+        Entry.soundQueue.total = Math.max(Entry.soundQueue.total, Entry.soundQueue.urls.size);
+        Entry.soundQueue.urls.delete(src);
+        const now = Entry.soundQueue.urls.size;
+        if (!Entry.soundQueue.loadComplete && now < 1) {
+            Entry.soundQueue.loadComplete = true;
+            Entry.dispatchEvent('soundLoaded');
+        }
+    };
+    Entry.soundQueue.on('fileload', (event) => {
+        Entry.soundQueue.loadCallback(event.item.src);
+    });
+    Entry.soundQueue.on('error', (event) => {
+        console.error('load sound, error', event);
+        Entry.soundQueue.loadCallback(event.data.src);
+    });
 
     Entry.loadAudio_(
         [
@@ -221,6 +248,8 @@ Entry.initialize_ = function() {
     this.playground = new Entry.Playground();
     this._destroyer.add(this.playground);
 
+    this.expansion = new Expansion(this.playground);
+    this._destroyer.add(this.expansion);
     this.intro = new Entry.Intro();
     /**
      * Initialize toast. Toast don't need generate view.
@@ -298,7 +327,7 @@ Entry.createDom = function(container, option) {
         canvas.height = 360;
         engineView.insertBefore(canvas, this.engine.buttonWrapper);
 
-        canvas.addEventListener('mousewheel', function(evt) {
+        canvas.addEventListener('mousewheel', (evt) => {
             const mousePosition = Entry.stage.mouseCoordinate;
             const tempList = Entry.variableContainer.getListById(mousePosition);
             const wheelDirection = evt.wheelDelta > 0;
@@ -320,6 +349,7 @@ Entry.createDom = function(container, option) {
 
         /** @type {!Element} */
         this.canvas_ = canvas;
+        this.extension = new Extension();
         this.stage.initStage(this.canvas_);
 
         const containerView = Entry.createElement('div');
@@ -552,21 +582,22 @@ Entry.Utils.initEntryEvent_ = function() {
  * @param {sound object} sound
  */
 Entry.initSound = function(sound) {
-    if (!sound || !sound.duration || sound.duration == 0) return;
+    if (!sound || !sound.duration || sound.duration == 0) {
+        return;
+    }
     sound.path =
         sound.fileurl ||
-        Entry.defaultPath +
-            '/uploads/' +
-            sound.filename.substring(0, 2) +
-            '/' +
-            sound.filename.substring(2, 4) +
-            '/' +
-            sound.filename +
-            sound.ext;
-
+        `${Entry.defaultPath}/uploads/${sound.filename.substring(0, 2)}/${sound.filename.substring(
+            2,
+            4
+        )}/${Entry.soundPath}${sound.filename}${sound.ext || '.mp3'}`;
+    Entry.soundQueue.urls.add(sound.path);
     Entry.soundQueue.loadFile({
         id: sound.id,
         src: sound.path,
         type: createjs.LoadQueue.SOUND,
     });
+    setTimeout(() => {
+        Entry.soundQueue.loadCallback(sound.path);
+    }, 3000);
 };
