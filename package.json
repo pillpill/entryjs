@@ -4,13 +4,13 @@
     "description": "JavaScript library for visual programming",
     "version": "0.1.1",
     "main": "dist/entry.js",
-    "homepage": "http://play-entry.com",
+    "homepage": "https://playentry.org",
     "author": {
         "name": "Entry Korea corp and other contributors"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/boolgom/entryjs.git"
+        "url": "https://github.com/entrylabs/entryjs.git"
     },
     "keywords": [
         "entry",
@@ -18,7 +18,7 @@
         "javascript"
     ],
     "bugs": {
-        "url": "https://github.com/boolgom/entryjs/issues"
+        "url": "https://github.com/entrylabs/entryjs/issues"
     },
     "scripts": {
         "lint": "cross-env NODE_ENV=lint webpack -w",
@@ -46,8 +46,8 @@
         "lodash": "^4.17.15",
         "postcss-flexbugs-fixes": "^4.1.0",
         "simplebar": "^3.1.1",
-        "uglifyjs-webpack-plugin": "^2.1.2",
-        "webpack": "^4.28.3",
+        "uglifyjs-webpack-plugin": "^2.2.0",
+        "webpack": "^4.41.4",
         "xss-filters": "^1.2.7"
     },
     "devDependencies": {
