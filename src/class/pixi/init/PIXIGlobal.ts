@@ -1,13 +1,12 @@
+import { Application, utils as PIXIUtils } from 'pixi.js';
 import { PIXIBaseAsset } from './PIXIBaseAsset';
-let ndgmr = require('./../etc/PIXI-ndgmr.Collision').PIXICollision;
-require('./../etc/PIXICanvasInput');
+import { PIXICollision as ndgmr } from '../etc/PIXI-ndgmr.Collision';
+import '../etc/PIXICanvasInput';
 
 import { PIXIAtlasManager } from '../atlas/PIXIAtlasManager';
-import { PIXIZeroAlphaNoneInteractionPlugins } from '../plugins/PIXIZeroAlphaNoneInteractionPlugins';
 import { PIXIPixelPerfectInteractionPlugIn } from '../plugins/PIXIPixelPerfectInteractionPlugIn';
 import { PIXITempStore } from '../etc/PIXITempStore';
 import { PIXITextMetricsPlugIn } from '../plugins/PIXITextMetricsPlugIn';
-import { PIXIDebug } from '../debugs/Debugs';
 import { PIXIShortPropPlugin } from '../plugins/PIXIShortPropPlugin';
 import { PIXIGraphicOverride } from '../plugins/PIXIGraphicOverride';
 import { PIXIFontLoadHandler } from './PIXIFontLoadHandler';
@@ -21,11 +20,12 @@ class _PIXIGlobal {
     fontLoadChecker: PIXIFontLoadHandler;
 
     initOnce() {
-        if (this._init) return;
+        if (this._init) {
+            return;
+        }
         this._init = true;
         this._isWebGLSupported();
         this.fontLoadChecker = new PIXIFontLoadHandler();
-        PIXIDebug.internal_init();
         //this.baseAsset = new PIXIBaseAsset();
         ndgmr.initTempObject();
         (window as any).ndgmr = ndgmr;
@@ -33,20 +33,18 @@ class _PIXIGlobal {
         this.atlasManager = new PIXIAtlasManager();
         PIXIShortPropPlugin();
         pixiGetChildAt();
-        PIXIZeroAlphaNoneInteractionPlugins();
         PIXIPixelPerfectInteractionPlugIn();
         PIXITextMetricsPlugIn();
         PIXIGraphicOverride();
     }
 
-    getNewApp(canvas: HTMLCanvasElement): PIXI.Application {
-        PIXI.utils.skipHello();
-        let app = new PIXI.Application({
+    getNewApp(canvas: HTMLCanvasElement): Application {
+        PIXIUtils.skipHello();
+        const app = new Application({
             view: canvas,
             width: canvas.width,
             height: canvas.height,
             autoStart: false,
-            // autoStart: true,
             antialias: true,
             transparent: true,
         });
@@ -55,9 +53,11 @@ class _PIXIGlobal {
     }
 
     private _isWebGLSupported() {
-        if (PIXI.utils.isWebGLSupported()) return;
+        if (PIXIUtils.isWebGLSupported()) {
+            return;
+        }
         throw new Error('webgl not supported');
     }
 }
 
-export let PIXIGlobal: _PIXIGlobal = new _PIXIGlobal();
+export const PIXIGlobal: _PIXIGlobal = new _PIXIGlobal();

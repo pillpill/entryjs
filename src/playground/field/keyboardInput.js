@@ -2,7 +2,7 @@
  */
 'use strict';
 
-import EntryTool from 'entry-tool';
+import { Dropdown } from '@entrylabs/tool';
 import EntryEvent from '@entrylabs/event';
 
 Entry.FieldKeyboard = class FieldDropdown extends Entry.Field {
@@ -83,7 +83,7 @@ Entry.FieldKeyboard = class FieldDropdown extends Entry.Field {
                 fill: this._textColor,
                 'font-size': `${+that._font_size}px`,
                 'font-weight': 'bold',
-                'font-family': 'NanumGothic',
+                'font-family': EntryStatic.fontFamily || 'NanumGothic',
             });
         }
 
@@ -181,11 +181,8 @@ Entry.FieldKeyboard = class FieldDropdown extends Entry.Field {
             parent: $('body'),
         });
         const { options = [] } = this._contents;
-        const convertedOptions = options.map(([key, value]) => {
-            return [this._convert(key, value), value];
-        });
-        this.dropdownWidget = new EntryTool({
-            type: 'dropdownWidget',
+        const convertedOptions = options.map(([key, value]) => [this._convert(key, value), value]);
+        this.dropdownWidget = new Dropdown({
             data: {
                 eventTypes: ['mousedown', 'touchstart', 'wheel'],
                 items: convertedOptions,
@@ -207,10 +204,14 @@ Entry.FieldKeyboard = class FieldDropdown extends Entry.Field {
         this.keyboardEvent.on('keyup.keyboard', this.keyboardControl);
     }
 
-    keyboardControl = (event) => {
-        event.stopPropagation && event.stopPropagation();
-        event.preventDefault && event.preventDefault();
-        const value = event.keyCode;
+    keyboardControl = (e) => {
+        e?.stopPropagation();
+        e?.preventDefault();
+        let value = Entry.Utils.inputToKeycode(e);
+        if (!value) {
+            return;
+        }
+
         const text = Entry.getKeyCodeMap()[value];
         if (text !== undefined) {
             this.destroyOption();
@@ -235,9 +236,7 @@ Entry.FieldKeyboard = class FieldDropdown extends Entry.Field {
             return Lang.Blocks.no_target;
         }
 
-        const matched = _.find(this._contents.options, ([, cValue]) => {
-            return cValue == value;
-        });
+        const matched = _.find(this._contents.options, ([, cValue]) => cValue == value);
 
         if (matched) {
             return _.head(matched);

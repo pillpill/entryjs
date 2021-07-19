@@ -360,8 +360,20 @@ Entry.Field = class Field {
             return 'dropdown';
         } else if (this instanceof Entry.FieldDropdownDynamic) {
             return 'dropdownDynamic';
+        } else if (this instanceof Entry.FieldDropdownExtra) {
+            return 'dropdownExtra';
         } else if (this instanceof Entry.FieldKeyboard) {
             return 'keyboard';
+        } else if (this instanceof Entry.FieldDynamicText) {
+            return 'dynamicText';
+        }
+        // 마이크로비트 전용
+        else if (this instanceof Entry.FieldLed) {
+            return 'led';
+        } else if (this instanceof Entry.FieldLed2) {
+            return 'led2';
+        } else if (this instanceof Entry.FieldMusicScale) {
+            return 'musicScale';
         }
     }
 
@@ -372,9 +384,7 @@ Entry.Field = class Field {
             case 'dropdown':
             case 'dropdownDynamic':
                 return _.chain(this._contents.options)
-                    .find(([, optionValue]) => {
-                        return optionValue === value;
-                    })
+                    .find(([, optionValue]) => optionValue === value)
                     .head()
                     .value();
             case 'textInput':
@@ -395,7 +405,7 @@ Entry.Field = class Field {
     }
 
     getFontFamily() {
-        return window.loadFontFamily || 'NanumGothic';
+        return window.loadFontFamily || EntryStatic.fontFamily || 'NanumGothic';
     }
 
     getIndex() {
@@ -425,9 +435,10 @@ Entry.Field = class Field {
         const board = this._blockView.getBoard();
         const { scale = 1 } = board;
         invisibleContext.font = `${fontSize}px ${this.getFontFamily()}`;
+        const heightLetter = EntryStatic.heightLetter || 'M';
         bBox = {
             width: Math.round(invisibleContext.measureText(value).width * 100) / 100,
-            height: Math.round(invisibleContext.measureText('M').width * 100) / 100,
+            height: Math.round(invisibleContext.measureText(heightLetter).width * 100) / 100,
         };
 
         if (fontSize && window.fontLoaded && bBox.width && bBox.height) {

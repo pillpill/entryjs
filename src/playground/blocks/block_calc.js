@@ -14,7 +14,12 @@ module.exports = {
                     },
                     {
                         type: 'Dropdown',
-                        options: [['+', 'PLUS'], ['-', 'MINUS'], ['x', 'MULTI'], ['/', 'DIVIDE']],
+                        options: [
+                            ['+', 'PLUS'],
+                            ['-', 'MINUS'],
+                            ['x', 'MULTI'],
+                            ['/', 'DIVIDE'],
+                        ],
                         value: 'PLUS',
                         fontSize: 10,
                         bgColor: EntryStatic.colorSet.block.darken.CALC,
@@ -139,7 +144,10 @@ module.exports = {
                             return leftValue + rightValue;
                         }
                     }
+                    // below statements assume both arguments are number
                     leftValue = new BigNumber(leftValue);
+                    rightValue = new BigNumber(rightValue);
+
                     if (operator === 'MINUS') {
                         return leftValue.minus(rightValue).toNumber();
                     } else if (operator === 'MULTI') {
@@ -325,7 +333,10 @@ module.exports = {
                     },
                     {
                         type: 'Dropdown',
-                        options: [['x', 'x'], ['y', 'y']],
+                        options: [
+                            ['x', 'x'],
+                            ['y', 'y'],
+                        ],
                         value: 'x',
                         fontSize: 10,
                         bgColor: EntryStatic.colorSet.block.darken.CALC,
@@ -373,7 +384,10 @@ module.exports = {
                                 },
                                 {
                                     type: 'Dropdown',
-                                    options: [['x', 'x'], ['y', 'y']],
+                                    options: [
+                                        ['x', 'x'],
+                                        ['y', 'y'],
+                                    ],
                                     value: 'x',
                                     fontSize: 11,
                                     arrowColor: EntryStatic.colorSet.arrow.default.CALC,
@@ -545,7 +559,7 @@ module.exports = {
                 class: 'calc',
                 isNotFor: [],
                 func() {
-                    return createjs.Sound.getVolume() * 100;
+                    return Entry.Utils.getVolume() * 100;
                 },
                 syntax: {
                     js: [],
@@ -645,9 +659,6 @@ module.exports = {
                 func(sprite, script) {
                     const left = script.getNumberValue('LEFTHAND', script);
                     const right = script.getNumberValue('RIGHTHAND', script);
-                    if (isNaN(left) || isNaN(right)) {
-                        throw new Error();
-                    }
                     const operator = script.getField('OPERATOR', script);
                     if (operator === 'QUOTIENT') {
                         return Math.floor(left / right);
@@ -1663,6 +1674,33 @@ module.exports = {
                     ],
                 },
             },
+            get_nickname: {
+                color: EntryStatic.colorSet.block.default.CALC,
+                fontColor: '#FFF',
+                outerLine: EntryStatic.colorSet.block.darken.CALC,
+                skeleton: 'basic_string_field',
+                statements: [],
+                params: [],
+                events: {},
+                def: {
+                    params: [],
+                    type: 'get_nickname',
+                },
+                class: 'calc_user',
+                isNotFor: [],
+                func() {
+                    return window.user ? window.user.nickname : ' ';
+                },
+                syntax: {
+                    js: [],
+                    py: [
+                        {
+                            syntax: 'Entry.value_of_nickname()',
+                            blockType: 'param',
+                        },
+                    ],
+                },
+            },
             length_of_string: {
                 color: EntryStatic.colorSet.block.default.CALC,
                 outerLine: EntryStatic.colorSet.block.darken.CALC,
@@ -1799,7 +1837,7 @@ module.exports = {
                     const leftValue = script.getStringValue('VALUE1', script);
                     const rightValue = script.getStringValue('VALUE2', script);
 
-                    return leftValue + rightValue;
+                    return `${leftValue}${rightValue}`;
                 },
                 syntax: {
                     js: [],
@@ -2236,12 +2274,14 @@ module.exports = {
                 class: 'calc_string',
                 isNotFor: [],
                 func(sprite, script) {
-                    const old_word = script.getStringValue('OLD_WORD', script).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const oldWord = script
+                        .getStringValue('OLD_WORD', script)
+                        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
                     return script
                         .getStringValue('STRING', script)
                         .replace(
-                            new RegExp(old_word, 'gm'),
+                            new RegExp(oldWord, 'gm'),
                             script.getStringValue('NEW_WORD', script)
                         );
                 },

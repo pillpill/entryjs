@@ -1,7 +1,7 @@
 'use strict';
 
 Entry.BINGLES = {
-    id: '1D.1',
+    id: '1.D',
     name: 'BINGLES',
     url: 'http://www.xbot.co.kr/',
     imageName: 'bingles.png',
@@ -87,6 +87,9 @@ Entry.BINGLES.setLanguage = function() {
                 bingles_oled: '얼굴 %1 번 표현 나타내기',
                 bingles_motorgo: '방향 %1 %2 초 움직이기',
             },
+            Menus: {
+                bingles: '빙글S',
+            },
         },
         en: {
             Blocks: {
@@ -118,9 +121,27 @@ Entry.BINGLES.setLanguage = function() {
                 bingles_oled: 'Set Facial Icon %1',
                 bingles_motorgo: 'Move Robot %1 %2 sec',
             },
+            Menus: {
+                bingles: "bingles: 'BINGLE · S'",
+            },
         },
     };
 };
+
+Entry.BINGLES.blockMenuBlocks = [
+    'bingles_analogValue',
+    'bingles_digitalOutput',
+    'bingles_rgb',
+    'bingles_rgb_picker',
+    'bingles_buzzer',
+    'bingles_servo',
+    'bingles_twoWheel',
+    'bingles_lcd',
+    'bingles_remotecontrol',
+    'bingles_oled',
+    'bingles_motorgo',
+];
+
 Entry.BINGLES.getBlocks = function() {
     return {
         //region xbot 엑스봇
@@ -212,7 +233,10 @@ Entry.BINGLES.getBlocks = function() {
                 },
                 {
                     type: 'Dropdown',
-                    options: [[Lang.Blocks.XBOT_High, 'HIGH'], [Lang.Blocks.XBOT_Low, 'LOW']],
+                    options: [
+                        [Lang.Blocks.XBOT_High, 'HIGH'],
+                        [Lang.Blocks.XBOT_Low, 'LOW'],
+                    ],
                     value: 'HIGH',
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
@@ -322,7 +346,10 @@ Entry.BINGLES.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['0', '0'], ['1', '1']],
+                    options: [
+                        ['0', '0'],
+                        ['1', '1'],
+                    ],
                     value: '0',
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,

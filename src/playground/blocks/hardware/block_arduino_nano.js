@@ -9,15 +9,15 @@ Entry.ArduinoNano = {
         ko: '아두이노 Nano',
         en: 'Arduino Nano',
     },
-    setZero: function() {
+    setZero() {
         if (!Entry.hw.sendQueue.SET) {
             Entry.hw.sendQueue = {
                 GET: {},
                 SET: {},
             };
         } else {
-            var keySet = Object.keys(Entry.hw.sendQueue.SET);
-            keySet.forEach(function(key) {
+            const keySet = Object.keys(Entry.hw.sendQueue.SET);
+            keySet.forEach((key) => {
                 Entry.hw.sendQueue.SET[key].data = 0;
                 Entry.hw.sendQueue.SET[key].time = new Date().getTime();
             });
@@ -81,6 +81,9 @@ Entry.ArduinoNano.setLanguage = function() {
                 arduino_nano_set_tone: '디지털 %1 번 핀의 버저를 %2 %3 음으로 %4 초 연주하기 %5',
                 arduino_nano_set_servo: '디지털 %1 번 핀의 서보모터를 %2 의 각도로 정하기 %3',
                 arduino_nano_get_digital: '디지털 %1 번 센서값',
+            },
+            Device: {
+                arduinonano: '아두이노 Nano',
             },
         },
         en: {

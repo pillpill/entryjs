@@ -40,7 +40,10 @@ Entry.Code = class Code {
 
         const parseCode = Array.isArray(code) ? code : JSON.parse(code);
         parseCode.forEach((t) => {
-            return this._data.push(new Entry.Thread(t, this));
+            const thread = new Entry.Thread(t, this);
+            if (thread.hasData()) {
+                this._data.push(thread);
+            }
         });
 
         return this;
@@ -122,7 +125,7 @@ Entry.Code = class Code {
                 continue;
             }
             if (value === undefined || block.params.indexOf(value) > -1) {
-                const executor = new Entry.Executor(blocks[i], entity);
+                const executor = new Entry.Executor(blocks[i], entity, this);
                 this.executors.push(executor);
                 executors.push(executor);
             }
@@ -139,25 +142,35 @@ Entry.Code = class Code {
     }
 
     tick() {
+        if (Entry.isTurbo && !this.isUpdateTime) {
+            this.isUpdateTime = performance.now();
+        }
         const executors = this.executors;
         const watchEvent = this.watchEvent;
         const shouldNotifyWatch = watchEvent.hasListeners();
-        let ret;
+        let result;
         let executedBlocks = [];
+        const loopExecutor = [];
 
         const _executeEvent = _.partial(Entry.dispatchEvent, 'blockExecute');
         const _executeEndEvent = _.partial(Entry.dispatchEvent, 'blockExecuteEnd');
 
         for (let i = 0; i < executors.length; i++) {
             const executor = executors[i];
-            if (!executor.isEnd()) {
+            if (executor.isPause()) {
+                continue;
+            } else if (!executor.isEnd()) {
                 const { view } = executor.scope.block || {};
                 _executeEvent(view);
-                ret = executor.execute(true);
-                if (shouldNotifyWatch) {
-                    executedBlocks = executedBlocks.concat(ret);
+                result = executor.execute(true);
+                if (executor.isLooped) {
+                    loopExecutor.push(executor);
                 }
-            } else {
+                if (shouldNotifyWatch) {
+                    const { blocks } = result;
+                    executedBlocks = executedBlocks.concat(blocks);
+                }
+            } else if (executor.isEnd()) {
                 _executeEndEvent(this.board);
                 executors.splice(i--, 1);
                 if (_.isEmpty(executors)) {
@@ -165,7 +178,42 @@ Entry.Code = class Code {
                 }
             }
         }
+
+        if (Entry.isTurbo) {
+            for (let i = 0; i < loopExecutor.length; i++) {
+                const executor = loopExecutor[i];
+                if (executor.isPause()) {
+                    continue;
+                } else if (!executor.isEnd()) {
+                    const { view } = executor.scope.block || {};
+                    _executeEvent(view);
+                    result = executor.execute(true);
+                    if (shouldNotifyWatch) {
+                        const { blocks } = result;
+                        executedBlocks = executedBlocks.concat(blocks);
+                    }
+                } else if (executor.isEnd()) {
+                    _executeEndEvent(this.board);
+                    loopExecutor.splice(i--, 1);
+                    if (_.isEmpty(loopExecutor)) {
+                        this.executeEndEvent.notify();
+                    }
+                }
+
+                if (
+                    i === loopExecutor.length - 1 &&
+                    Entry.tickTime > performance.now() - this.isUpdateTime
+                ) {
+                    i = -1;
+                }
+            }
+        }
+
+        this.isUpdateTime = 0;
         shouldNotifyWatch && watchEvent.notify(executedBlocks);
+        if (result && result.promises) {
+            Entry.engine.addPromiseExecutor(result.promises);
+        }
     }
 
     removeExecutor(executor) {
@@ -332,6 +380,10 @@ Entry.Code = class Code {
         let block = thread.getBlock(pointer.shift());
         while (pointer.length) {
             if (!(block instanceof Entry.Block)) {
+                if (!block || !block.getValueBlock) {
+                    console.error("can't get valueBlock", block);
+                    return block;
+                }
                 block = block.getValueBlock();
             }
             const type = pointer.shift();

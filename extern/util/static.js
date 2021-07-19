@@ -1,8 +1,14 @@
 'use strict';
 
-var EntryStatic = {};
-
-EntryStatic.objectTypes = ['sprite', 'textBox'];
+/* eslint-disable */
+var EntryStatic = {
+    fontFamily: 'NanumGothic',
+    exportBlockFontFamily:
+        "NanumGothic, 'NanumGothic', '나눔고딕','NanumGothicWeb', '맑은 고딕', 'Malgun Gothic', Dotum",
+    fontOffsetY: -2.5,
+    heightLetter: 'M',
+    objectTypes: ['sprite', 'textBox'],
+};
 
 EntryStatic.usageList = [
     'usage_sequence',
@@ -284,7 +290,17 @@ EntryStatic.getAllBlocks = function() {
         },
         {
             category: 'text',
-            blocks: ['text_read', 'text_write', 'text_append', 'text_prepend', 'text_flush'],
+            blocks: [
+                'text_read',
+                'text_write',
+                'text_append',
+                'text_prepend',
+                'text_change_effect',
+                'text_change_font',
+                'text_change_font_color',
+                'text_change_bg_color',
+                'text_flush',
+            ],
         },
         {
             category: 'sound',
@@ -328,6 +344,7 @@ EntryStatic.getAllBlocks = function() {
                 'distance_something',
                 'get_sound_duration',
                 'get_user_name',
+                'get_nickname',
                 'length_of_string',
                 'combine_something',
                 'char_at',
@@ -366,6 +383,93 @@ EntryStatic.getAllBlocks = function() {
             blocks: ['functionAddButton'],
         },
         {
+            category: 'analysis',
+            blocks: [
+                'analizyDataAddButton',
+                'append_row_to_table',
+                'insert_row_to_table',
+                'delete_row_from_table',
+                'set_value_from_table',
+                'get_table_count',
+                'get_value_from_table',
+                'get_value_from_last_row',
+                'calc_values_from_table',
+                'open_table_chart',
+                'close_table_chart',
+            ],
+        },
+        {
+            category: 'ai_utilize',
+            blocks: [
+                'aiUtilizeBlockAddButton',
+                'aiUtilizeModelTrainButton',
+                'learning_title_image',
+                'learning_title_speech',
+                'learning_title_text',
+                'learning_title_number',
+                'learning_title_regression',
+                'learning_title_cluster',
+                'retrain_model',
+                'model_is_trained',
+                'set_train_visible',
+                'set_train_chart',
+                'set_regression_option',
+                'get_regression_predict_1',
+                'get_regression_predict_2',
+                'get_regression_predict_3',
+                'get_regression_accuracy',
+                'set_cluster_option_k',
+                'set_cluster_option_centroids',
+                'get_cluster_centriod_count',
+                'get_cluster_centriod_value',
+                'get_cluster_centriod_index_1',
+                'get_cluster_centriod_index_2',
+                'get_cluster_centriod_index_3',
+                'set_number_learning_option_k',
+                'get_number_learning_predict_1',
+                'get_number_learning_predict_2',
+                'get_number_learning_predict_3',
+                'get_number_learning_predict_param_1',
+                'get_number_learning_predict_param_2',
+                'get_number_learning_predict_param_3',
+                'is_number_learning_group_1',
+                'is_number_learning_group_2',
+                'is_number_learning_group_3',
+                'insert_data_for_test',
+                'insert_text_block_for_test',
+                'test_result',
+                'accuracy_of_result',
+                'is_group',
+                'audio_title',
+                'check_microphone',
+                'speech_to_text_convert',
+                'speech_to_text_get_value',
+                'get_microphone_volume',
+                'tts_title',
+                'read_text',
+                'read_text_wait_with_block',
+                'set_tts_property',
+                'translate_title',
+                'get_translated_string',
+                'check_language',
+                'video_title',
+                'video_draw_webcam',
+                'video_change_cam',
+                'video_check_webcam',
+                'video_flip_camera',
+                'video_set_camera_opacity_option',
+                'video_motion_value',
+                'video_toggle_model',
+                'video_is_model_loaded',
+                'video_object_detected',
+                'video_number_detect',
+                'video_toggle_ind',
+                'video_body_part_coord',
+                'video_face_part_coord',
+                'video_detected_face_info',
+            ],
+        },
+        {
             category: 'expansion',
             blocks: [
                 'expansionBlockAddButton',
@@ -380,9 +484,6 @@ EntryStatic.getAllBlocks = function() {
                 'get_city_weather_data',
                 'get_current_city_weather_data',
                 'get_today_city_temperature',
-                'translate_title',
-                'get_translated_string',
-                'check_language',
                 'festival_title',
                 'count_festival',
                 'get_festival_info',
@@ -397,13 +498,13 @@ EntryStatic.getAllBlocks = function() {
         {
             category: 'arduino',
             blocks: [
-                'arduino_download_connector',
-                'download_guide',
-                'arduino_download_source',
-                'arduino_connect',
                 'arduino_reconnect',
                 'arduino_open',
                 'arduino_cloud_pc_open',
+                'arduino_connect',
+                'arduino_download_connector',
+                // 'download_guide',
+                'arduino_download_source',
                 'arduino_noti',
             ].concat(EntryStatic.DynamicHardwareBlocks),
         },
@@ -589,7 +690,7 @@ EntryStatic.objectSubCategories = {
     environment: ['environment_nature', 'environment_space', 'environment_others'],
     stuff: ['stuff_living', 'stuff_hobby', 'stuff_others'],
     fantasy: [],
-    interface: [],
+    interface: ['interface_website', 'interface_game', 'interface_others'],
     background: [
         'background_outdoor',
         'background_indoor',
@@ -598,6 +699,7 @@ EntryStatic.objectSubCategories = {
     ],
 };
 
+/* eslint-disable */
 Object.defineProperty(EntryStatic, 'fonts', {
     get: function() {
         return [
@@ -605,31 +707,151 @@ Object.defineProperty(EntryStatic, 'fonts', {
                 name: Lang.Fonts.batang,
                 family: 'KoPub Batang',
                 url: '/css/kopubbatang.css',
-            },
-            {
-                name: Lang.Fonts.myeongjo,
-                family: 'Nanum Myeongjo',
-                url: '/css/nanummyeongjo.css',
-            },
-            {
-                name: Lang.Fonts.gothic,
-                family: 'Nanum Gothic',
-                url: '/css/nanumgothic.css',
-            },
-            {
-                name: Lang.Fonts.pen_script,
-                family: 'Nanum Pen Script',
-                url: '/css/nanumpenscript.css',
+                visible: false,
             },
             {
                 name: Lang.Fonts.jeju_hallasan,
                 family: 'Jeju Hallasan',
                 url: '/css/jejuhallasan.css',
+                visible: false,
+            },
+            {
+                name: Lang.Fonts.gothic,
+                family: 'Nanum Gothic',
+                url: '/css/nanumgothic.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.myeongjo,
+                family: 'Nanum Myeongjo',
+                url: '/css/nanummyeongjo.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.pen_script,
+                family: 'Nanum Pen Script',
+                url: '/css/nanumpenscript.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.square_round,
+                family: 'NanumSquareRound',
+                url: '/css/square_round.css',
+                visible: true,
             },
             {
                 name: Lang.Fonts.gothic_coding,
                 family: 'Nanum Gothic Coding',
                 url: '/css/nanumgothiccoding.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.jalnan,
+                family: 'yg-jalnan',
+                url: '/css/jalnan.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.designhouse,
+                family: 'designhouseOTFLight00',
+                url: '/css/designhouse.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.dunggeunmo,
+                family: 'DungGeunMo',
+                url: '/css/dunggeunmo.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.uhbeemysen,
+                family: 'UhBeemysen',
+                url: '/css/uhbeemysen.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.sd_comic_stencil,
+                family: 'SDComicStencil',
+                style: {
+                    backgroundColor: '#f7fcff',
+                    padding: '17px 22px 14px 16px',
+                    margin: '0px',
+                    borderTop: 'solid 1px #d6e9f4',
+                },
+                url: '/css/SDComicStencil.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.sd_childfundkorea,
+                family: 'SDChildfundkorea',
+                style: {
+                    backgroundColor: '#f7fcff',
+                    padding: '17px 22px 14px 16px',
+                    margin: '0px',
+                    borderTop: 'solid 1px #d6e9f4',
+                },
+                url: '/css/SDChildfundkorea.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.sd_cinema_theater,
+                family: 'SDCinemaTheater',
+                style: {
+                    backgroundColor: '#f7fcff',
+                    padding: '17px 22px 14px 16px',
+                    margin: '0px',
+                    borderTop: 'solid 1px #d6e9f4',
+                },
+                url: '/css/SDCinemaTheater.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.sd_mapssi,
+                family: 'SDMapssi',
+                style: {
+                    backgroundColor: '#f7fcff',
+                    padding: '17px 22px 14px 16px',
+                    margin: '0px',
+                    borderTop: 'solid 1px #d6e9f4',
+                },
+                url: '/css/SDMapssi.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.sd_shabang,
+                family: 'SDShabang',
+                style: {
+                    backgroundColor: '#f7fcff',
+                    padding: '17px 22px 14px 16px',
+                    margin: '0px',
+                    borderTop: 'solid 1px #d6e9f4',
+                },
+                url: '/css/SDShabang.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.sd_woodcarving,
+                family: 'SDWoodcarving',
+                style: {
+                    backgroundColor: '#f7fcff',
+                    padding: '17px 22px 14px 16px',
+                    margin: '0px',
+                    borderTop: 'solid 1px #d6e9f4',
+                },
+                url: '/css/SDWoodcarving.css',
+                visible: true,
+            },
+            {
+                name: Lang.Fonts.sd_yongbi,
+                family: 'SDYongbi',
+                style: {
+                    backgroundColor: '#f7fcff',
+                    padding: '17px 22px 14px 16px',
+                    margin: '0px',
+                    borderTop: 'solid 1px #d6e9f4',
+                },
+                url: '/css/SDYongbi.css',
+                visible: true,
             },
         ];
     },
@@ -642,7 +864,7 @@ EntryStatic.colorSet = {
             START: '#FFFFFF',
             FLOW: '#3A71BC',
             MOVING: '#8641B6',
-            LOOKS: '#D8234E',
+            LOOKS: '#FFFFFF',
             TEXT: '#DC9C32',
             SOUND: '#83A617',
             JUDGE: '#89A1F7',
@@ -650,57 +872,71 @@ EntryStatic.colorSet = {
             VARIABLE: '#CE38CE',
             HARDWARE: '#FFFFFF',
             EXPANSION: '#FF8888',
+            AI_UTILIZE: '#FF8888',
+            HIDDEN: '#FFFFFF',
         },
     },
     block: {
         default: {
             START: '#00b400',
-            FLOW: '#17a6d1',
+            FLOW: '#19baea',
             MOVING: '#ad3efb',
             LOOKS: '#ff3a61',
-            BRUSH: '#fc7e01',
+            BRUSH: '#ff9b00',
             TEXT: '#e43500',
             SOUND: '#67b100',
             JUDGE: '#4562f5',
             CALC: '#f4af18',
             VARIABLE: '#dd47d8',
+            ANALYSIS: '#25aeff',
             FUNC: '#de5c04',
             HARDWARE: '#00b6b1',
             EXPANSION: '#ef6d6d',
+            AI_UTILIZE: '#8222ff',
+            HIDDEN: '#8aa3b2',
+            AI_LEARNING: '#8222ff',
         },
         lighten: {
             START: '#3bce3b',
-            FLOW: '#3bce3b',
+            FLOW: '#6dddfe',
             MOVING: '#bd65fb',
             LOOKS: '#ff5577',
-            BRUSH: '#ff9831',
+            BRUSH: '#ffb250',
             TEXT: '#ff6739',
             SOUND: '#7ecc12',
             JUDGE: '#99adff',
             CALC: '#ffde82',
             VARIABLE: '#f778f3',
+            ANALYSIS: '#d6e9f4',
             FUNC: '#ff7b22',
             HARDWARE: '#78d5d3',
             EXPANSION: '#ffaeae',
+            AI_UTILIZE: '#ffaeae',
+            HIDDEN: '#ffaeae',
+            AI_LEARNING: '#8222ff',
         },
         darken: {
             START: '#009400',
-            FLOW: '#007ca2',
+            FLOW: '#1498c0',
             MOVING: '#8b19db',
             LOOKS: '#c72042',
-            BRUSH: '#c72042',
+            BRUSH: '#fc6500',
             TEXT: '#ad2800',
             SOUND: '#508a00',
             JUDGE: '#1b3ad8',
             CALC: '#ff7f00',
             VARIABLE: '#b819b3',
+            ANALYSIS: '#1592ff',
             FUNC: '#a14100',
             HARDWARE: '#008380',
             EXPANSION: '#c63f3f',
+            AI_UTILIZE: '#670bdd',
+            HIDDEN: '#728997',
+            AI_LEARNING: '#670bdd',
         },
         emphasize: {
             '#00b400': '#5BC982', //START
-            '#17a6d1': '#62A5F4', //FLOW
+            '#19baea': '#62A5F4', //FLOW
             '#ad3efb': '#C08FF7', //MOVING
             '#ff3a61': '#F46487', //LOOKS
             '#fc7e01': '#FFB05A', //BRUSH
@@ -717,6 +953,12 @@ EntryStatic.colorSet = {
     common: {
         WHITE: '#FFFFFF',
         DARK: '#000000',
+        TRANSPARENT: 'transparent',
+        BUTTON: '#4f80ff',
+        BUTTON_BACKGROUND: '#eee',
+        TEXT: '#333',
+        BUTTON_BACKGROUND_DISABLED: '#f9f9f9',
+        BUTTON_DISABLED: '#cbcbcb',
     },
 };
 
@@ -752,6 +994,17 @@ EntryStatic.getQuestionCategoryData = function() {
             'hidden_boolean',
         ],
     };
+};
+
+EntryStatic.getDefaultFontFamily = function() {
+    const localLang = Lang || {};
+    const type = localLang.type;
+    const fallbackType = localLang.fallbackType;
+    const langType = type || fallbackType || 'en';
+    switch (langType) {
+        default:
+            return "EntryNG, NanumGothic, 나눔고딕, NanumGothicWeb, '맑은 고딕', 'Malgun Gothic', Dotum";
+    }
 };
 
 // for server node js code

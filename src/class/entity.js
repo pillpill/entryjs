@@ -2,12 +2,14 @@
  * @fileoverview entity object is class for entry object canvas view.
  */
 
-
 'use strict';
 
-import {GEHelper} from '../graphicEngine/GEHelper';
-import {GEDragHelper} from '../graphicEngine/GEDragHelper';
-import { clog } from './pixi/utils/logs';
+import { GEHelper } from '../graphicEngine/GEHelper';
+import { GEDragHelper } from '../graphicEngine/GEDragHelper';
+
+const FONT_PADDING_TOP_EXCEPTIONS = ['Nanum Gothic Coding', 'SDMapssi'];
+const TEXT_BOX_REPOSITION_THRESHOLD = 10;
+const TEXT_BOX_REPOSITION_OFFSET = 10;
 
 /**
  * Construct entity class
@@ -28,6 +30,11 @@ Entry.EntityObject = class EntityObject {
         this.shapes = [];
         this._rndPosX = 0;
         this._rndPosY = 0;
+        this.voice = { speed: 0, pitch: 0, speaker: 'kyuri', volume: 1 };
+        this.defaultLog = {
+            textEffect: {},
+        };
+
         if (this.type === 'sprite') {
             this._rndPosX = GEHelper.rndPosition();
             this._rndPosY = GEHelper.rndPosition();
@@ -38,14 +45,26 @@ Entry.EntityObject = class EntityObject {
         } else if (this.type === 'textBox') {
             this.object = GEHelper.newContainer();
             this._scaleAdaptor = GEHelper.newAScaleAdaptor(this.object);
-            this.textObject = GEHelper.textHelper.newText("", '20px Nanum Gothic', "", 'middle', 'center');
-            if(GEHelper.isWebGL) {
+            this.textObject = GEHelper.textHelper.newText(
+                '',
+                '20px Nanum Gothic',
+                '',
+                'middle',
+                'center'
+            );
+
+            /*
+             bgObject 가 transparent 인 경우에도 textObject 가 hit 처리되어서
+             container on event 가 동작해버리는 이슈가 있었음. (issues/10463)
+             textObject 를 정확히 그려진 부분만 interactive 하도록 플래그 수정
+             */
+            this.textObject.pixelPerfect = true;
+
+            if (GEHelper.isWebGL) {
                 this.textObject.anchor.set(0.5, 0.5);
             }
             this.bgObject = GEHelper.newGraphic();
-            this.bgObject.graphics
-                .beginFill("#ffffff")
-                .drawRect(0, 0, 100, 100);
+            this.bgObject.graphics.beginFill('#ffffff').drawRect(0, 0, 100, 100);
             this.object.addChild(this.bgObject);
             this.object.addChild(this.textObject);
 
@@ -67,8 +86,7 @@ Entry.EntityObject = class EntityObject {
             Entry.dispatchEvent('entityClick', this.entity);
             Entry.stage.isObjectClick = true;
 
-            if (Entry.type != 'minimize' && Entry.stage.isEntitySelectable()) {
-
+            if (Entry.type !== 'minimize' && Entry.stage.isEntitySelectable()) {
                 this.offset = {
                     x: -this.parent.x + this.entity.getX() - (stageX * 0.75 - 240),
                     y: -this.parent.y - this.entity.getY() - (stageY * 0.75 - 135),
@@ -92,8 +110,11 @@ Entry.EntityObject = class EntityObject {
                     if (entity.parent.getLock()) {
                         return;
                     }
-                    entity.setX(stageX * 0.75 - 240 + this.offset.x);
-                    entity.setY(-(stageY * 0.75 - 135) - this.offset.y);
+
+                    if (this.offset) {
+                        entity.setX(stageX * 0.75 - 240 + this.offset.x);
+                        entity.setY(-(stageY * 0.75 - 135) - this.offset.y);
+                    }
                     Entry.stage.updateObject();
                 }
             });
@@ -276,8 +297,8 @@ Entry.EntityObject = class EntityObject {
      * @param {number} direction
      * @param {boolean} flippable
      */
-    setDirection(direction = 0, flippable) {
-        direction = direction % 360;
+    setDirection(dir = 0, flippable) {
+        const direction = dir.mod(360);
         const parent = this.parent;
 
         if (parent.getRotateMethod() === 'vertical' && !flippable) {
@@ -290,7 +311,7 @@ Entry.EntityObject = class EntityObject {
             }
         }
         /** @type {number} */
-        this.direction = direction.mod(360);
+        this.direction = direction;
         this.object.direction = this.direction * GEHelper.rotateWrite;
         !this.isClone && parent.updateRotationView();
         Entry.dispatchEvent('updateObject');
@@ -337,7 +358,7 @@ Entry.EntityObject = class EntityObject {
         }
         /** @type {number} */
         this.regX = regX;
-        if(GEHelper.isWebGL) {
+        if (GEHelper.isWebGL) {
             this._scaleAdaptor.pivot.setX(regX);
         } else {
             this.object.regX = this.regX;
@@ -363,7 +384,7 @@ Entry.EntityObject = class EntityObject {
         }
         /** @type {number} */
         this.regY = regY;
-        if(GEHelper.isWebGL) {
+        if (GEHelper.isWebGL) {
             this._scaleAdaptor.pivot.setY(regY);
         } else {
             this.object.regY = this.regY;
@@ -386,9 +407,9 @@ Entry.EntityObject = class EntityObject {
     setScaleX(scaleX) {
         /** @type {number} */
         this.scaleX = scaleX;
-        if(GEHelper.isWebGL) {
+        if (GEHelper.isWebGL) {
             this._scaleAdaptor.scale.setX(scaleX);
-            if(this.textObject) {
+            if (this.textObject) {
                 this.textObject.setFontScaleX(scaleX);
             }
         } else {
@@ -414,9 +435,9 @@ Entry.EntityObject = class EntityObject {
     setScaleY(scaleY) {
         /** @type {number} */
         this.scaleY = scaleY;
-        if(GEHelper.isWebGL) {
+        if (GEHelper.isWebGL) {
             this._scaleAdaptor.scale.setY(scaleY);
-            if(this.textObject) {
+            if (this.textObject) {
                 this.textObject.setFontScaleY(scaleY);
             }
         } else {
@@ -472,9 +493,9 @@ Entry.EntityObject = class EntityObject {
         //todo [박봉배] object.width -> object.$width 로 변경
         this.object.$width = this.width;
         if (this.textObject && this.getLineBreak()) {
-            if(GEHelper.isWebGL) {
+            if (GEHelper.isWebGL) {
                 this.textObject.style.wordWrapWidth = this.width;
-            }else{
+            } else {
                 this.textObject.lineWidth = this.width;
             }
         }
@@ -516,6 +537,13 @@ Entry.EntityObject = class EntityObject {
         return this.height;
     }
 
+    setColorWithLog(colour) {
+        if (!this.defaultLog.textColor) {
+            this.defaultLog.textColor = this.colour || '#000000';
+        }
+        this.setColour(colour);
+    }
+
     /**
      * colour setter
      * @param {?string} colour
@@ -535,6 +563,17 @@ Entry.EntityObject = class EntityObject {
      */
     getColour() {
         return this.colour;
+    }
+
+    /**
+     * NT11576 BGcolor with log #3513
+     * @param {*} colour
+     */
+    setBGColourWithLog(colour = 'transparent') {
+        if (!this.defaultLog.textBGColor) {
+            this.defaultLog.textBGColor = this.bgColor || 'transparent';
+        }
+        this.setBGColour(colour);
     }
 
     /**
@@ -559,7 +598,7 @@ Entry.EntityObject = class EntityObject {
 
     setUnderLine(underLine = false) {
         this.underLine = underLine;
-        if(GEHelper.isWebGL) {
+        if (GEHelper.isWebGL) {
             this.textObject.style.underLine = underLine;
         } else {
             this.textObject.underLine = underLine;
@@ -573,7 +612,7 @@ Entry.EntityObject = class EntityObject {
 
     setStrike(strike = false) {
         this.strike = strike;
-        if(GEHelper.isWebGL) {
+        if (GEHelper.isWebGL) {
             this.textObject.style.cancelLine = strike;
         } else {
             this.textObject.strike = strike;
@@ -601,10 +640,17 @@ Entry.EntityObject = class EntityObject {
         return fontArray.join(' ');
     }
 
+    setFontWithLog(font, shouldUpdateWidth) {
+        if (!this.defaultLog.textFont) {
+            this.defaultLog.textFont = `${this.getFontSize()} ${this.fontType}`;
+        }
+        this.setFont(font, shouldUpdateWidth);
+    }
+
     /**
      * font setter
      */
-    setFont(font = '20px Nanum Gothic') {
+    setFont(font = '20 Nanum Gothic', shouldUpdateWidth = true) {
         if (this.parent.objectType !== 'textBox') {
             return;
         }
@@ -615,37 +661,46 @@ Entry.EntityObject = class EntityObject {
         const fontArray = font.split(' ');
         let i = 0;
 
+        // NT11576 wodnjs6512
+        // #3513 글씨체 변경시에 기존 bold 와 italic을 받아와서 사용하도록
         if ((i = fontArray.indexOf('bold') > -1)) {
             fontArray.splice(i - 1, 1);
+            this.setFontBold(true);
+        } else if (this.fontBold) {
             this.setFontBold(true);
         }
         if ((i = fontArray.indexOf('italic') > -1)) {
             fontArray.splice(i - 1, 1);
             this.setFontItalic(true);
+        } else if (this.fontItalic) {
+            this.setFontItalic(true);
         }
-        this.setFontSize(parseInt(fontArray.shift()));
+
+        if (this.getLineBreak()) {
+            this.setLineBreak(this.getLineBreak());
+        }
+
+        this.setFontSize(parseFloat(fontArray.shift()));
         this.setFontType(fontArray.join(' '));
 
         this._syncFontStyle();
         Entry.stage.update();
-        this.setWidth(this.textObject.getMeasuredWidth());
+
+        // NT11576 wodnjs6512
+        // #3513 기존의 텍스트 상자 리사이즈가 필요없는 경우에는 disable 할수 있도록 옵션으로 실행 default = 실행
+        if (shouldUpdateWidth) {
+            this.setWidth(this.textObject.getMeasuredWidth());
+        }
+
         this.updateBG();
+        Entry.stage.update();
         Entry.stage.updateObject();
     }
 
     setLineHeight() {
-        let lineHeight;
-        switch (this.getFontType()) {
-            case 'Nanum Gothic Coding': {
-                lineHeight = this.fontSize;
-                break;
-            }
-            default: {
-                lineHeight = 0;
-                break;
-            }
-        }
-        if(GEHelper.isWebGL) {
+        const lineHeight = this.fontSize + 2;
+
+        if (GEHelper.isWebGL) {
             this.textObject.style.lineHeight = lineHeight;
         } else {
             this.textObject.lineHeight = lineHeight;
@@ -712,8 +767,9 @@ Entry.EntityObject = class EntityObject {
     /**
      * set font bold state
      */
-    setFontBold(isFontBold) {
+    setFontBold(isFontBold = false) {
         this.fontBold = isFontBold;
+        this.syncFont();
         Entry.requestUpdate = true;
     }
 
@@ -729,8 +785,9 @@ Entry.EntityObject = class EntityObject {
     /**
      * set font italic state
      */
-    setFontItalic(isFontItalic) {
+    setFontItalic(isFontItalic = false) {
         this.fontItalic = isFontItalic;
+        this.syncFont();
         Entry.requestUpdate = true;
     }
 
@@ -754,11 +811,83 @@ Entry.EntityObject = class EntityObject {
 
         return font
             .split(' ')
-            .filter((font) => {
-                return !/^(bold|italic)$/.test(font) && !~font.indexOf('px');
-            })
+            .filter((font) => !/^(bold|italic)$/.test(font) && !~font.indexOf('px'))
             .join(' ')
             .trim();
+    }
+
+    /**
+     * NT11576 wodnjs6512
+     * #3513 text effect setter
+     * @param {string} effect
+     */
+    setTextEffect(effect, mode) {
+        if (this.parent.objectType !== 'textBox') {
+            return;
+        }
+        // remember default
+        if (this.defaultLog.textEffect[effect] == undefined) {
+            this.defaultLog.textEffect[effect] = this[effect];
+        }
+        this.textObject.text = this.text;
+        this.applyEffectByNameAndValue(effect, mode == 'on');
+    }
+
+    /**
+     * NT11576 wodnjs6512
+     * #3513 reset text effect accroding to the log left with setTextEffect()
+     */
+    resetTextEffect() {
+        for (const effect of Object.keys(this.defaultLog.textEffect)) {
+            const value = this.defaultLog.textEffect[effect];
+            this.applyEffectByNameAndValue(effect, value);
+        }
+        if (this.defaultLog.textColor) {
+            this.setColour(this.defaultLog.textColor);
+        }
+        if (this.defaultLog.textFont) {
+            this.setFont(this.defaultLog.textFont);
+        }
+        if (this.defaultLog.textBGColor) {
+            this.setBGColour(this.defaultLog.textBGColor);
+        }
+        this.defaultLog = {
+            textEffect: {},
+        };
+    }
+
+    /**
+     * NT11576 wodnjs6512
+     * #3513 change font style and update stage
+     * @param {*} effect
+     * @param {*} mode
+     */
+
+    applyEffectByNameAndValue(effect, mode) {
+        switch (effect) {
+            case 'fontBold':
+                this.setFontBold(mode);
+                break;
+            case 'fontItalic':
+                this.setFontItalic(mode);
+                break;
+            case 'underLine':
+                this.setUnderLine(mode);
+                break;
+            case 'strike':
+                this.setStrike(mode);
+                break;
+        }
+        this.updateTextbox();
+    }
+
+    updateTextbox() {
+        if (!this.lineBreak) {
+            this.setWidth(this.textObject.getMeasuredWidth());
+            this.parent.updateCoordinateView();
+        }
+        this.updateBG();
+        Entry.stage.updateObject();
     }
 
     /**
@@ -772,12 +901,7 @@ Entry.EntityObject = class EntityObject {
         /** @type {string} */
         this.text = text;
         this.textObject.text = this.text;
-        if (!this.lineBreak) {
-            this.setWidth(this.textObject.getMeasuredWidth());
-            this.parent.updateCoordinateView();
-        }
-        this.updateBG();
-        Entry.stage.updateObject();
+        this.updateTextbox();
     }
 
     /**
@@ -800,8 +924,8 @@ Entry.EntityObject = class EntityObject {
 
         const textObj = this.textObject;
         const alignValue = Entry.TEXT_ALIGNS[textAlign];
-        if(GEHelper.isWebGL) {
-            let anchorX = [0.5, 0, 1];
+        if (GEHelper.isWebGL) {
+            const anchorX = [0.5, 0, 1];
             textObj.anchor.x = anchorX[textAlign];
             textObj.style.align = alignValue;
         } else {
@@ -838,25 +962,25 @@ Entry.EntityObject = class EntityObject {
         this.lineBreak = lineBreak;
 
         if (previousState && !this.lineBreak) {
-            if(isWebGL) {
+            if (isWebGL) {
                 this.textObject.style.wordWrap = false;
             } else {
                 this.textObject.lineWidth = null;
             }
             this.setHeight(this.textObject.getMeasuredLineHeight());
             this.setText(this.getText().replace(/\n/g, ''));
-            if(isWebGL) {
+            if (isWebGL) {
                 this.textObject.anchor.y = 0.5;
             }
         } else if (this.lineBreak) {
-            if(previousState === false) {
+            if (previousState === false) {
                 this.setFontSize(this.getFontSize() * this.getScaleX());
                 this.setHeight(this.textObject.getMeasuredLineHeight() * 3);
                 this.setWidth(this.getWidth() * this.getScaleX());
                 this.setScaleX(1);
                 this.setScaleY(1);
             }
-            if(isWebGL) {
+            if (isWebGL) {
                 this.textObject.anchor.y = 0;
                 this.textObject.style.wordWrap = true;
                 this.textObject.style.breakWords = true;
@@ -937,24 +1061,34 @@ Entry.EntityObject = class EntityObject {
         this.setRegX(this.width / 2 + absoluteRegX);
         this.setRegY(this.height / 2 + absoluteRegY);
 
-
         /**
          * //이 코드는 createjs 일때만 호출 됨.
          * @param {AtlasImageLoadingInfo} info
          */
-        const onImageLoad = (info)=> {
-            if (this.removed) return;
-            if (info.source() !== this.object.image) return;
-            let hasFilter = !_.isEmpty(that.object.filters);
-            GEHelper.colorFilter.setCache(this, hasFilter);
-            if(GEHelper.isWebGL) {
-                this.object.refreshFilter();
-            }
-            Entry.requestUpdate = true;
-        };
-        GEHelper.resManager.reqResource(this.object, this.parent.scene.id, pictureModel, onImageLoad);
-        if(GEHelper.isWebGL) {
+        const onImageLoad = GEHelper.isWebGL
+            ? null
+            : (info) => {
+                  if (this.removed) {
+                      return;
+                  }
+                  const isResizedImage = info.source() !== this.object.image;
+                  if (isResizedImage) {
+                      this.object.image = info.source();
+                  }
+                  const hasFilter = !_.isEmpty(that.object.filters);
+                  GEHelper.colorFilter.setCache(this, hasFilter);
+                  Entry.requestUpdate = true;
+              };
+
+        GEHelper.resManager.reqResource(
+            this.object,
+            this.parent.scene.id,
+            pictureModel,
+            onImageLoad
+        );
+        if (GEHelper.isWebGL) {
             this._scaleAdaptor.updateScaleFactor();
+            this.object.refreshFilter();
         }
 
         Entry.dispatchEvent('updateObject');
@@ -981,7 +1115,7 @@ Entry.EntityObject = class EntityObject {
             const adjust = Entry.adjustValueWithMaxMin;
 
             if (~diffEffects.indexOf('brightness')) {
-                let brightness = adjust(e.brightness, -100, 100);
+                const brightness = adjust(e.brightness, -100, 100);
                 f.push(GEHelper.colorFilter.brightness(brightness));
             }
 
@@ -990,13 +1124,35 @@ Entry.EntityObject = class EntityObject {
             }
 
             if (~diffEffects.indexOf('hsv')) {
+                /* eslint-disable */
                 let matrixValue = [
-                    1, 0, 0, 0, 0,
-                    0, 1, 0, 0, 0,
-                    0, 0, 1, 0, 0,
-                    0, 0, 0, 1, 0,
-                    0, 0, 0, 0, 1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
                 ];
+                /* eslint-enable */
 
                 const degrees = e.hsv * 3.6;
                 const r = (degrees * 3 * Math.PI) / 180;
@@ -1009,30 +1165,92 @@ Entry.EntityObject = class EntityObject {
                 }
 
                 if (v > 0 && v <= 0.33) {
+                    /* eslint-disable */
                     matrixValue = [
-                        1, 0, 0, 0, 0,
-                        0, cosVal, sinVal, 0, 0,
-                        0, -1 * sinVal, cosVal, 0, 0,
-                        0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        cosVal,
+                        sinVal,
+                        0,
+                        0,
+                        0,
+                        -1 * sinVal,
+                        cosVal,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
                     ];
                 } else if (v <= 0.66) {
                     matrixValue = [
-                        cosVal, 0, sinVal, 0, 0,
-                        1, 0, 0, 0, 0,
-                        sinVal, 0, cosVal, 0, 0,
-                        0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 1,
+                        cosVal,
+                        0,
+                        sinVal,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        sinVal,
+                        0,
+                        cosVal,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
                     ];
                 } else if (v <= 0.99) {
                     matrixValue = [
-                        cosVal, sinVal, 0, 0, 0,
-                        -1 * sinVal, cosVal, 0, 0, 0,
-                        0, 0, 1, 0, 0,
-                        0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 1,
+                        cosVal,
+                        sinVal,
+                        0,
+                        0,
+                        0,
+                        -1 * sinVal,
+                        cosVal,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
                     ];
                 }
+                /* eslint-enable */
 
                 const colorFilter = GEHelper.colorFilter.newColorMatrixFilter(matrixValue);
                 f.push(colorFilter);
@@ -1041,8 +1259,13 @@ Entry.EntityObject = class EntityObject {
             if (~diffEffects.indexOf('alpha')) {
                 e.alpha = adjust(e.alpha, 0, 1);
                 obj.alpha = e.alpha;
+                if (obj.alpha < 0.001) {
+                    obj.interactive = false;
+                } else {
+                    obj.interactive = true;
+                }
             }
-            if(GEHelper.isWebGL) {
+            if (GEHelper.isWebGL) {
                 obj.setFilterAndCache(f);
             } else {
                 obj.filters = f;
@@ -1071,13 +1294,18 @@ Entry.EntityObject = class EntityObject {
         }
 
         const object = this.object;
-        if(GEHelper.isWebGL) {
+        if (GEHelper.isWebGL) {
             object.setFilterAndCache(null);
         } else {
             object.filters = [];
         }
         this.setInitialEffectValue();
         object.alpha = this.effect.alpha;
+        if (object.alpha < 0.001) {
+            object.interactive = false;
+        } else {
+            object.interactive = true;
+        }
         GEHelper.colorFilter.setCache(this, false);
     }
 
@@ -1200,6 +1428,23 @@ Entry.EntityObject = class EntityObject {
     }
 
     /*
+     * Return initial effect value
+     * @return {effect}
+     */
+    setVoiceProp(prop) {
+        const { speed = 0, pitch = 0, speaker = 'kyuri', volume = 1 } = prop;
+        this.voice = { speed, pitch, speaker, volume };
+    }
+
+    /*
+     * Return initial effect value
+     * @return {effect}
+     */
+    getVoiceProp() {
+        return this.voice;
+    }
+
+    /*
      * remove brush
      */
     removeBrush() {
@@ -1207,11 +1452,28 @@ Entry.EntityObject = class EntityObject {
         this.brush = null;
     }
 
-    /*
-     * erase brush
-     */
     eraseBrush() {
-        this._removeShapes();
+        const brush = this.brush;
+        if (brush) {
+            // WebGL 인경우 createjs와 같은 코드로 동작하지 않아서 코드 분기생성 (#11626)
+            const isWebGL = GEHelper.isWebGL;
+            if (isWebGL) {
+                const { r, g, b } = brush.rgb;
+                const thickness = brush.thickness;
+                const opacity = 1 - brush.opacity / 100;
+                brush.clear();
+                brush.setStrokeStyle(thickness);
+                brush.beginStrokeFast(Entry.rgb2Number(r, g, b), opacity);
+            } else {
+                // 기존 스펙으로 롤백(#11434)
+                const stroke = brush._stroke.style;
+                const thickness = brush._strokeStyle.width;
+                brush
+                    .clear()
+                    .setStrokeStyle(thickness)
+                    .beginStroke(stroke);
+            }
+        }
         Entry.requestUpdate = true;
     }
 
@@ -1220,7 +1482,7 @@ Entry.EntityObject = class EntityObject {
         const shapes = this.shapes;
         const LEN = shapes.length;
         let s;
-        for(let i = 0 ; i < LEN ; i++ ) {
+        for (let i = 0; i < LEN; i++) {
             s = shapes[i];
             container.removeChild(s);
             s.destroy && s.destroy(true); //pixi 일때만 호출
@@ -1236,12 +1498,10 @@ Entry.EntityObject = class EntityObject {
         const width = this.getWidth();
         const height = this.getHeight();
         const bgColor = this.getBGColour();
-        const hasColor = (bgColor || "").indexOf("#") === 0;
+        const hasColor = (bgColor || '').indexOf('#') === 0;
         this.bgObject.alpha = hasColor ? 1 : 0;
 
-        this.bgObject.graphics
-            .beginFill(bgColor)
-            .drawRect(-width / 2, -height / 2, width, height);
+        this.bgObject.graphics.beginFill(bgColor).drawRect(-width / 2, -height / 2, width, height);
         if (this.getLineBreak()) {
             this.bgObject.x = 0;
         } else {
@@ -1267,14 +1527,20 @@ Entry.EntityObject = class EntityObject {
         const textObject = this.textObject;
         const isWebGL = GEHelper.isWebGL;
         if (this.lineBreak) {
-            if(isWebGL) {
-                textObject.y = -this.getHeight() / 2;
+            if (isWebGL) {
+                textObject.y = -this.getHeight() / 2 + TEXT_BOX_REPOSITION_OFFSET;
             } else {
-                textObject.y = textObject.getMeasuredLineHeight() / 2 - this.getHeight() / 2;
-            }
-
-            if (this.fontType === 'Nanum Gothic Coding') {
-                textObject.y += 10;
+                const desiredValue =
+                    textObject.getMeasuredLineHeight() / 2 -
+                    this.getHeight() / 2 +
+                    TEXT_BOX_REPOSITION_OFFSET / 2;
+                // 가끔씩 계산의 값이 달라지는 경우가 있어서 확인하여서 기존과 차이가 거의 없다면 그대로,
+                if (Math.abs(desiredValue - textObject.y) > TEXT_BOX_REPOSITION_THRESHOLD) {
+                    textObject.y =
+                        FONT_PADDING_TOP_EXCEPTIONS.indexOf(this.fontType) > -1
+                            ? desiredValue + TEXT_BOX_REPOSITION_OFFSET
+                            : desiredValue;
+                }
             }
 
             switch (this.textAlign) {
@@ -1288,7 +1554,7 @@ Entry.EntityObject = class EntityObject {
                     textObject.x = this.getWidth() / 2;
                     break;
             }
-            if(isWebGL) {
+            if (isWebGL) {
                 textObject.style.maxHeight = this.getHeight();
             } else {
                 textObject.maxHeight = this.getHeight();
@@ -1300,7 +1566,7 @@ Entry.EntityObject = class EntityObject {
     }
 
     syncDialogVisible() {
-        if (this.dialog) {
+        if (this.dialog?.object) {
             this.dialog.object.visible = this.visible;
         }
     }
@@ -1315,9 +1581,7 @@ Entry.EntityObject = class EntityObject {
     }
 
     removeStamps() {
-        this.stamps.forEach((s) => {
-            return s.destroy();
-        });
+        this.stamps.forEach((s) => s.destroy());
         this.stamps = [];
         Entry.requestUpdate = true;
     }
@@ -1337,12 +1601,12 @@ Entry.EntityObject = class EntityObject {
             delete object.entity;
         }
 
-        if(this._scaleAdaptor) {
+        if (this._scaleAdaptor) {
             this._scaleAdaptor.destroy();
             this._scaleAdaptor = null;
         }
 
-        if (this.stamps) {
+        if (this.stamps && this.stamps.length) {
             this.removeStamps();
         }
 
@@ -1351,13 +1615,13 @@ Entry.EntityObject = class EntityObject {
         Entry.stage.unloadEntity(this);
 
         //pixi 전용 코드
-        object && object.destroy && object.destroy({children: true});
+        object && object.destroy && object.destroy({ children: true });
     }
 
     cache() {
         const { object } = this;
         if (object) {
-            if(!GEHelper.isWebGL) {
+            if (!GEHelper.isWebGL) {
                 object.cache(0, 0, this.getWidth(), this.getHeight());
             }
             Entry.requestUpdate = true;
@@ -1365,19 +1629,21 @@ Entry.EntityObject = class EntityObject {
     }
 
     reset() {
+        this.resetTextEffect();
         this.loadSnapshot();
         this.resetFilter();
+
         _.result(this.dialog, 'remove');
         this.shapes.length && this.removeBrush();
     }
 
     _syncFontStyle() {
         this.textObject.font = this.getFont();
-        if(!GEHelper.isWebGL) {
+        if (!GEHelper.isWebGL) {
             return;
         }
-        let style = this.textObject.style;
-        style.fontSize = this.getFontSize() + 'px';
+        const style = this.textObject.style;
+        style.fontSize = `${this.getFontSize()}px`;
         style.fontStyle = this.fontItalic ? 'italic' : 'normal';
         style.fontWeight = this.fontBold ? 'bold' : 'normal';
         style.fontFamily = this.fontType;

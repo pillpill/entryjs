@@ -1,9 +1,5 @@
-'use strict';
+import debounce from 'lodash/debounce';
 
-/*
- *
- * @param {object} dom which to inject playground
- */
 Entry.Board = class Board {
     constructor(option) {
         Entry.Model(this, false);
@@ -133,7 +129,7 @@ Entry.Board = class Board {
 
         const that = this;
         if (code && !shouldNotCreateView) {
-            this.codeListener = this.code.changeEvent.attach(this, function() {
+            this.codeListener = this.code.changeEvent.attach(this, () => {
                 that.changeEvent.notify();
             });
             this.svgCommentGroup.remove();
@@ -196,10 +192,10 @@ Entry.Board = class Board {
 
         const scroller = that.scroller;
         if (scroller) {
-            dom.mouseenter(function() {
+            dom.mouseenter(() => {
                 scroller.setOpacity(0.8);
             });
-            dom.mouseleave(function() {
+            dom.mouseleave(() => {
                 scroller.setOpacity(0);
             });
         }
@@ -221,6 +217,10 @@ Entry.Board = class Board {
         }
         if (e.preventDefault) {
             e.preventDefault();
+        }
+        if (e.which == 2) {
+            console.log('mouse wheel click disabled');
+            return;
         }
 
         if (this.workingEvent) {
@@ -503,11 +503,13 @@ Entry.Board = class Board {
     }
 
     cancelEdit() {
-        Entry.do('funcEditCancel');
+        Entry.disposeEvent.notify();
+        Entry.do('funcEditEnd', 'cancel');
     }
 
     save() {
-        Entry.do('funcCreate');
+        Entry.disposeEvent.notify();
+        Entry.do('funcEditEnd', 'save');
     }
 
     generateCodeMagnetMap() {
@@ -1142,6 +1144,7 @@ Entry.Board = class Board {
 
     _initContextOptions() {
         const that = this;
+        const { options = {} } = Entry;
         this._contextOptions = [
             {
                 activated: true,
@@ -1210,7 +1213,7 @@ Entry.Board = class Board {
                 },
             },
             {
-                activated: true,
+                activated: !options.commentDisable,
                 option: {
                     text: Lang.Blocks.add_comment,
                     enable: !this.readOnly,
@@ -1229,7 +1232,7 @@ Entry.Board = class Board {
                 },
             },
             {
-                activated: true,
+                activated: !options.commentDisable,
                 option: {
                     text: Lang.Blocks.hide_all_comment,
                     enable: !this.readOnly,
@@ -1260,7 +1263,7 @@ Entry.Board = class Board {
 
         evt = Entry.windowResized;
         if (evt) {
-            evt.attach(this, Entry.Utils.debounce(this.updateOffset, 200));
+            evt.attach(this, debounce(this.updateOffset, 200));
         }
     }
 

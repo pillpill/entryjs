@@ -39,6 +39,20 @@ Entry.Cobl.blockMenuBlocks = [
     'cobl_external_led',
     'cobl_7_segment',
 ];
+Entry.Cobl.setLanguage = function() {
+    return {
+        ko: {
+            Menus: {
+                cobl: '코블',
+            },
+        },
+        en: {
+            Menus: {
+                cobl: 'Cobl',
+            },
+        },
+    };
+};
 Entry.Cobl.getBlocks = function() {
     return {
         //region cobl 코블
@@ -191,7 +205,10 @@ Entry.Cobl.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
@@ -229,7 +246,10 @@ Entry.Cobl.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
@@ -264,7 +284,10 @@ Entry.Cobl.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
@@ -299,7 +322,11 @@ Entry.Cobl.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2'], ['3', '3']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                        ['3', '3'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
@@ -355,7 +382,11 @@ Entry.Cobl.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2'], ['3', '3']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                        ['3', '3'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
@@ -465,7 +496,6 @@ Entry.Cobl.getBlocks = function() {
                 {
                     type: 'Block',
                     accept: 'string',
-                    value: 0,
                 },
                 {
                     type: 'Indicator',
@@ -474,7 +504,7 @@ Entry.Cobl.getBlocks = function() {
                 },
             ],
             def: {
-                params: ['0'],
+                params: ['90'],
                 type: 'cobl_servo_angle_control',
             },
             paramsKeyMap: {
@@ -483,7 +513,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var value = script.getNumberField('VALUE');
+                var value = script.getNumberValue('VALUE');
                 value = Math.round(value);
                 value = Math.max(value, 15);
                 value = Math.min(value, 165);
@@ -556,7 +586,7 @@ Entry.Cobl.getBlocks = function() {
             isNotFor: ['cobl'],
             func: function(sprite, script) {
                 var melody = script.getStringField('MELODY');
-                var duration = script.getStringField('DURATION');
+                var duration = script.getNumberValue('DURATION');
 
                 Entry.hw.setDigitalPortValue('Melody', melody);
                 Entry.hw.setDigitalPortValue('Melody_DUR', duration);
@@ -577,21 +607,34 @@ Entry.Cobl.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
                 },
                 {
                     type: 'Dropdown',
-                    options: [['1.시계방향', '1'], ['2.반시계방향', '2'], ['3.정지', '3']],
+                    options: [
+                        ['1.시계방향', '1'],
+                        ['2.반시계방향', '2'],
+                        ['3.정지', '3'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
                 },
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                        ['3', '3'],
+                        ['4', '4'],
+                        ['5', '5'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
@@ -646,7 +689,10 @@ Entry.Cobl.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [['1', '1'], ['2', '2']],
+                    options: [
+                        ['1', '1'],
+                        ['2', '2'],
+                    ],
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
                     arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
@@ -746,7 +792,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var led = script.getStringField('PORT');
+                var led = script.getNumberValue('PORT');
                 var value = script.getStringField('OPERATOR');
 
                 Entry.hw.setDigitalPortValue('ELED_IDX', led);
@@ -885,7 +931,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var led = script.getNumberField('LED');
+                var led = script.getNumberValue('LED');
                 var r = script.getStringField('RED');
                 var g = script.getStringField('GREEN');
                 var b = script.getStringField('BLUE');
@@ -932,7 +978,7 @@ Entry.Cobl.getBlocks = function() {
             class: 'cobl',
             isNotFor: ['cobl'],
             func: function(sprite, script) {
-                var value = script.getNumberField('VALUE');
+                var value = script.getNumberValue('VALUE');
                 var value_s = value.toString();
                 var value_c = value_s.substring(0, 4);
                 Entry.hw.setDigitalPortValue('7SEG', value_c);
