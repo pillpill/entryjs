@@ -9,9 +9,9 @@ Entry.Arduino = {
         ko: '아두이노',
         en: 'Arduino',
     },
-    setZero: function() {
+    setZero() {
         Entry.hw.sendQueue.readablePorts = [];
-        for (var port = 0; port < 20; port++) {
+        for (let port = 0; port < 20; port++) {
             Entry.hw.sendQueue[port] = 0;
             Entry.hw.sendQueue.readablePorts.push(port);
         }
@@ -22,99 +22,152 @@ Entry.Arduino = {
         width: 605,
         height: 434,
         listPorts: {
-            '2': {
-                name: Lang.Hw.port_en + ' 2 ' + Lang.Hw.port_ko,
+            2: {
+                name: `${Lang.Hw.port_en} 2 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '3': {
-                name: Lang.Hw.port_en + ' 3 ' + Lang.Hw.port_ko,
+            3: {
+                name: `${Lang.Hw.port_en} 3 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '4': {
-                name: Lang.Hw.port_en + ' 4 ' + Lang.Hw.port_ko,
+            4: {
+                name: `${Lang.Hw.port_en} 4 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '5': {
-                name: Lang.Hw.port_en + ' 5 ' + Lang.Hw.port_ko,
+            5: {
+                name: `${Lang.Hw.port_en} 5 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '6': {
-                name: Lang.Hw.port_en + ' 6 ' + Lang.Hw.port_ko,
+            6: {
+                name: `${Lang.Hw.port_en} 6 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '7': {
-                name: Lang.Hw.port_en + ' 7 ' + Lang.Hw.port_ko,
+            7: {
+                name: `${Lang.Hw.port_en} 7 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '8': {
-                name: Lang.Hw.port_en + ' 8 ' + Lang.Hw.port_ko,
+            8: {
+                name: `${Lang.Hw.port_en} 8 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '9': {
-                name: Lang.Hw.port_en + ' 9 ' + Lang.Hw.port_ko,
+            9: {
+                name: `${Lang.Hw.port_en} 9 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '10': {
-                name: Lang.Hw.port_en + ' 10 ' + Lang.Hw.port_ko,
+            10: {
+                name: `${Lang.Hw.port_en} 10 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '11': {
-                name: Lang.Hw.port_en + ' 11 ' + Lang.Hw.port_ko,
+            11: {
+                name: `${Lang.Hw.port_en} 11 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '12': {
-                name: Lang.Hw.port_en + ' 12 ' + Lang.Hw.port_ko,
+            12: {
+                name: `${Lang.Hw.port_en} 12 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
-            '13': {
-                name: Lang.Hw.port_en + ' 13 ' + Lang.Hw.port_ko,
+            13: {
+                name: `${Lang.Hw.port_en} 13 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
             a0: {
-                name: Lang.Hw.port_en + ' A0 ' + Lang.Hw.port_ko,
+                name: `${Lang.Hw.port_en} A0 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
             a1: {
-                name: Lang.Hw.port_en + ' A1 ' + Lang.Hw.port_ko,
+                name: `${Lang.Hw.port_en} A1 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
             a2: {
-                name: Lang.Hw.port_en + ' A2 ' + Lang.Hw.port_ko,
+                name: `${Lang.Hw.port_en} A2 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
             a3: {
-                name: Lang.Hw.port_en + ' A3 ' + Lang.Hw.port_ko,
+                name: `${Lang.Hw.port_en} A3 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
             a4: {
-                name: Lang.Hw.port_en + ' A4 ' + Lang.Hw.port_ko,
+                name: `${Lang.Hw.port_en} A4 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
             a5: {
-                name: Lang.Hw.port_en + ' A5 ' + Lang.Hw.port_ko,
+                name: `${Lang.Hw.port_en} A5 ${Lang.Hw.port_ko}`,
                 type: 'input',
                 pos: { x: 0, y: 0 },
             },
         },
         mode: 'both',
     },
+};
+
+Entry.Arduino.setLanguage = function () {
+    return {
+        ko: {
+            template: {
+                arduino_get_number_sensor_value: '아날로그 %1 번 값 ',
+                arduino_get_digital_value: '디지털 %1 번 값',
+                arduino_toggle_led: '디지털 %1 번 핀 %2 %3',
+                arduino_toggle_pwm: '디지털 %1 번 핀을 %2 (으)로 정하기 %3',
+                arduino_convert_scale: '%1 번 값의 범위를 %2 ~ %3 에서 %4 ~ %5 (으)로 바꾼 값',
+            },
+            Device: {
+                arduino: '아두이노',
+            },
+            Menus: {
+                arduino: '아두이노',
+            },
+            Helper: {
+                arduino_get_number_sensor_value: '선택한 핀의 아날로그 값입니다. (0 ~ 1023)',
+                arduino_convert_scale: '선택한 핀의 아날로그 값을 입력한 범위로 바꾼 값입니다.',
+                arduino_get_digital_value:
+                    '선택한 핀의 디지털 값입니다. 핀이 켜진 경우 "참"으로 판단합니다.',
+                arduino_toggle_led: '선택한 핀을 켜거나 끕니다.',
+                arduino_toggle_pwm: '선택한 핀을 입력한 값으로 정합니다.',
+            },
+        },
+        en: {
+            template: {
+                arduino_get_number_sensor_value: 'analog %1 value  ',
+                arduino_get_digital_value: 'digital %1 value  ',
+                arduino_toggle_led: '%2 digital %1 pin %3',
+                arduino_toggle_pwm: 'Set digital %1 pin to %2 %3',
+                arduino_convert_scale: 'mapped value of analog %1 that %2 ~ %3 to %4 ~ %5',
+            },
+            Device: {
+                arduino: 'arduino',
+            },
+            Menus: {
+                arduino: 'Arduino',
+            },
+            Helper: {
+                arduino_get_number_sensor_value:
+                    'Reports the value that analog signal of the selected pin. (0 ~ 1023)',
+                arduino_convert_scale:
+                    'Reports the value that analog signal of the selected pin mapping original range onto input range.',
+                arduino_get_digital_value:
+                    'Checks whether the selected pin is turned on. If it turned on, it is judged as "True".',
+                arduino_toggle_led: 'Turn on or turn off the selected pin.',
+                arduino_toggle_pwm: 'Set the selected pin to input value.',
+            },
+        },
+    };
 };
 
 Entry.Arduino.blockMenuBlocks = [
@@ -125,7 +178,7 @@ Entry.Arduino.blockMenuBlocks = [
     'arduino_convert_scale',
 ];
 
-Entry.Arduino.getBlocks = function() {
+Entry.Arduino.getBlocks = function () {
     return {
         //region arduino 아두이노
         arduino_text: {
@@ -144,7 +197,7 @@ Entry.Arduino.getBlocks = function() {
             paramsKeyMap: {
                 NAME: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getStringField('NAME');
             },
             syntax: {
@@ -164,89 +217,6 @@ Entry.Arduino.getBlocks = function() {
                 ],
             },
         },
-        arduino_send: {
-            color: EntryStatic.colorSet.block.default.HARDWARE,
-            outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
-            skeleton: 'basic',
-            statements: [],
-            params: [
-                {
-                    type: 'Block',
-                    accept: 'string',
-                },
-            ],
-            events: {},
-            def: {
-                params: [],
-            },
-            paramsKeyMap: {
-                VALUE: 0,
-            },
-            func: function(sprite, script) {
-                var signal = script.getValue('VALUE', script);
-                var xmlHttp = new XMLHttpRequest();
-                xmlHttp.open('POST', 'http://localhost:23518/arduino/', false);
-                xmlHttp.send(String(signal));
-                Entry.assert(xmlHttp.status == 200, 'arduino is not connected');
-                return script.callReturn();
-            },
-        },
-        arduino_get_number: {
-            color: EntryStatic.colorSet.block.default.HARDWARE,
-            outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
-            skeleton: 'basic_string_field',
-            statements: [],
-            params: [
-                {
-                    type: 'Block',
-                    accept: 'string',
-                },
-            ],
-            events: {},
-            def: {
-                params: [],
-            },
-            paramsKeyMap: {
-                VALUE: 0,
-            },
-            func: function(sprite, script) {
-                var signal = script.getValue('VALUE', script);
-                var xmlHttp = new XMLHttpRequest();
-                xmlHttp.open('POST', 'http://localhost:23518/arduino/', false);
-                xmlHttp.send(String(signal));
-                Entry.assert(xmlHttp.status == 200, 'arduino is not connected');
-                var data = xmlHttp.responseText;
-                return Number(data);
-            },
-        },
-        arduino_get_string: {
-            color: EntryStatic.colorSet.block.default.HARDWARE,
-            outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
-            skeleton: 'basic_string_field',
-            statements: [],
-            params: [
-                {
-                    type: 'Block',
-                    accept: 'string',
-                },
-            ],
-            events: {},
-            def: {
-                params: [],
-            },
-            paramsKeyMap: {
-                VALUE: 0,
-            },
-            func: function(sprite, script) {
-                var signal = script.getValue('VALUE', script);
-                var xmlHttp = new XMLHttpRequest();
-                xmlHttp.open('POST', 'http://localhost:23518/arduino/', false);
-                xmlHttp.send(String(signal));
-                Entry.assert(xmlHttp.status == 200, 'arduino is not connected');
-                var data = xmlHttp.responseText;
-                return data;
-            },
-        },
         arduino_get_sensor_number: {
             color: EntryStatic.colorSet.block.default.HARDWARE,
             outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
@@ -256,12 +226,12 @@ Entry.Arduino.getBlocks = function() {
                 {
                     type: 'Dropdown',
                     options: [
-                        ['0', 'A0'],
-                        ['1', 'A1'],
-                        ['2', 'A2'],
-                        ['3', 'A3'],
-                        ['4', 'A4'],
-                        ['5', 'A5'],
+                        ['A0', 'A0'],
+                        ['A1', 'A1'],
+                        ['A2', 'A2'],
+                        ['A3', 'A3'],
+                        ['A4', 'A4'],
+                        ['A5', 'A5'],
                     ],
                     value: 'A0',
                     fontSize: 11,
@@ -276,7 +246,7 @@ Entry.Arduino.getBlocks = function() {
             paramsKeyMap: {
                 PORT: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getStringField('PORT');
             },
             syntax: {
@@ -345,7 +315,7 @@ Entry.Arduino.getBlocks = function() {
             paramsKeyMap: {
                 PORT: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getStringField('PORT');
             },
             syntax: {
@@ -412,7 +382,7 @@ Entry.Arduino.getBlocks = function() {
             paramsKeyMap: {
                 PORT: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getStringField('PORT');
             },
             syntax: {
@@ -470,8 +440,8 @@ Entry.Arduino.getBlocks = function() {
             },
             class: 'arduino_value',
             isNotFor: ['arduino'],
-            func: function(sprite, script) {
-                var signal = script.getValue('VALUE', script);
+            func(sprite, script) {
+                const signal = script.getValue('VALUE', script);
                 return Entry.hw.getAnalogPortValue(signal[1]);
             },
             syntax: {
@@ -517,13 +487,13 @@ Entry.Arduino.getBlocks = function() {
             },
             class: 'arduino_value',
             isNotFor: ['arduino'],
-            func: function(sprite, script) {
+            func(sprite, script) {
                 const { hwModule = {} } = Entry.hw;
                 const { name } = hwModule;
                 if (name === 'ArduinoExt') {
                     return Entry.block.arduino_ext_get_digital.func(sprite, script);
                 } else {
-                    var signal = script.getNumberValue('PORT', script);
+                    const signal = script.getNumberValue('PORT', script);
                     return Entry.hw.getDigitalPortValue(signal);
                 }
             },
@@ -557,7 +527,10 @@ Entry.Arduino.getBlocks = function() {
                 },
                 {
                     type: 'Dropdown',
-                    options: [[Lang.Blocks.ARDUINO_on, 'on'], [Lang.Blocks.ARDUINO_off, 'off']],
+                    options: [
+                        [Lang.Blocks.ARDUINO_on, 'on'],
+                        [Lang.Blocks.ARDUINO_off, 'off'],
+                    ],
                     value: 'on',
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
@@ -586,10 +559,10 @@ Entry.Arduino.getBlocks = function() {
             },
             class: 'arduino_set',
             isNotFor: ['arduino'],
-            func: function(sprite, script) {
-                var port = script.getNumberValue('VALUE');
-                var operator = script.getField('OPERATOR');
-                var value = operator == 'on' ? 255 : 0;
+            func(sprite, script) {
+                const port = script.getNumberValue('VALUE');
+                const operator = script.getField('OPERATOR');
+                const value = operator == 'on' ? 255 : 0;
                 Entry.hw.setDigitalPortValue(port, value);
                 return script.callReturn();
             },
@@ -662,9 +635,9 @@ Entry.Arduino.getBlocks = function() {
             },
             class: 'arduino_set',
             isNotFor: ['arduino'],
-            func: function(sprite, script) {
-                var port = script.getNumberValue('PORT');
-                var value = script.getNumberValue('VALUE');
+            func(sprite, script) {
+                const port = script.getNumberValue('PORT');
+                let value = script.getNumberValue('VALUE');
                 value = Math.round(value);
                 value = Math.max(value, 0);
                 value = Math.min(value, 255);
@@ -763,16 +736,16 @@ Entry.Arduino.getBlocks = function() {
             },
             class: 'arduino',
             isNotFor: ['arduino'],
-            func: function(sprite, script) {
-                var value1 = script.getNumberValue('VALUE1', script);
-                var value2 = script.getNumberValue('VALUE2', script);
-                var value3 = script.getNumberValue('VALUE3', script);
-                var value4 = script.getNumberValue('VALUE4', script);
-                var value5 = script.getNumberValue('VALUE5', script);
+            func(sprite, script) {
+                const value1 = script.getNumberValue('VALUE1', script);
+                let value2 = script.getNumberValue('VALUE2', script);
+                let value3 = script.getNumberValue('VALUE3', script);
+                let value4 = script.getNumberValue('VALUE4', script);
+                let value5 = script.getNumberValue('VALUE5', script);
 
-                var stringValue4 = script.getValue('VALUE4', script);
-                var stringValue5 = script.getValue('VALUE5', script);
-                var isFloat = false;
+                const stringValue4 = script.getValue('VALUE4', script);
+                const stringValue5 = script.getValue('VALUE5', script);
+                let isFloat = false;
 
                 if (
                     (Entry.Utils.isNumber(stringValue4) && stringValue4.indexOf('.') > -1) ||
@@ -781,7 +754,7 @@ Entry.Arduino.getBlocks = function() {
                     isFloat = true;
                 }
 
-                var result = value1;
+                let result = value1;
                 if (value2 > value3) {
                     var swap = value2;
                     value2 = value3;

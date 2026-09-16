@@ -9,15 +9,15 @@ Entry.ArduinoExt = {
         ko: '아두이노 Uno 확장모드',
         en: 'ArduinoExt Uno',
     },
-    setZero: function() {
+    setZero() {
         if (!Entry.hw.sendQueue.SET) {
             Entry.hw.sendQueue = {
                 GET: {},
                 SET: {},
             };
         } else {
-            var keySet = Object.keys(Entry.hw.sendQueue.SET);
-            keySet.forEach(function(key) {
+            const keySet = Object.keys(Entry.hw.sendQueue.SET);
+            keySet.forEach((key) => {
                 Entry.hw.sendQueue.SET[key].data = 0;
                 Entry.hw.sendQueue.SET[key].time = new Date().getTime();
             });
@@ -36,7 +36,7 @@ Entry.ArduinoExt = {
         TIMER: 8,
     },
     toneTable: {
-        '0': 0,
+        0: 0,
         C: 1,
         CS: 2,
         D: 3,
@@ -51,48 +51,82 @@ Entry.ArduinoExt = {
         B: 12,
     },
     toneMap: {
-        '1': [33, 65, 131, 262, 523, 1046, 2093, 4186],
-        '2': [35, 69, 139, 277, 554, 1109, 2217, 4435],
-        '3': [37, 73, 147, 294, 587, 1175, 2349, 4699],
-        '4': [39, 78, 156, 311, 622, 1245, 2849, 4978],
-        '5': [41, 82, 165, 330, 659, 1319, 2637, 5274],
-        '6': [44, 87, 175, 349, 698, 1397, 2794, 5588],
-        '7': [46, 92, 185, 370, 740, 1480, 2960, 5920],
-        '8': [49, 98, 196, 392, 784, 1568, 3136, 6272],
-        '9': [52, 104, 208, 415, 831, 1661, 3322, 6645],
-        '10': [55, 110, 220, 440, 880, 1760, 3520, 7040],
-        '11': [58, 117, 233, 466, 932, 1865, 3729, 7459],
-        '12': [62, 123, 247, 494, 988, 1976, 3951, 7902],
+        1: [33, 65, 131, 262, 523, 1046, 2093, 4186],
+        2: [35, 69, 139, 277, 554, 1109, 2217, 4435],
+        3: [37, 73, 147, 294, 587, 1175, 2349, 4699],
+        4: [39, 78, 156, 311, 622, 1245, 2849, 4978],
+        5: [41, 82, 165, 330, 659, 1319, 2637, 5274],
+        6: [44, 87, 175, 349, 698, 1397, 2794, 5588],
+        7: [46, 92, 185, 370, 740, 1480, 2960, 5920],
+        8: [49, 98, 196, 392, 784, 1568, 3136, 6272],
+        9: [52, 104, 208, 415, 831, 1661, 3322, 6645],
+        10: [55, 110, 220, 440, 880, 1760, 3520, 7040],
+        11: [58, 117, 233, 466, 932, 1865, 3729, 7459],
+        12: [62, 123, 247, 494, 988, 1976, 3951, 7902],
     },
     highList: ['high', '1', 'on'],
     lowList: ['low', '0', 'off'],
     BlockState: {},
 };
 
-Entry.ArduinoExt.setLanguage = function() {
+Entry.ArduinoExt.setLanguage = function () {
     return {
         ko: {
             template: {
-                arduino_ext_get_analog_value: '아날로그 %1 번 센서값',
-                arduino_ext_get_analog_value_map: '%1 의 범위를 %2 ~ %3 에서 %4 ~ %5 로 바꾼값',
-                arduino_ext_get_ultrasonic_value: '울트라소닉 Trig %1 Echo %2 센서값',
+                arduino_ext_get_analog_value: '아날로그 %1 번 값',
+                arduino_ext_get_analog_value_map:
+                    '%1 의 범위를 %2 ~ %3 에서 %4 ~ %5 (으)로 바꾼 값',
+                arduino_ext_get_ultrasonic_value:
+                    '디지털 %1 번 핀을 Trig에 디지털 %2 번 핀을 Echo에 연결한 초음파 센서 값',
                 arduino_ext_toggle_led: '디지털 %1 번 핀 %2 %3',
                 arduino_ext_digital_pwm: '디지털 %1 번 핀을 %2 (으)로 정하기 %3',
-                arduino_ext_set_tone: '디지털 %1 번 핀의 버저를 %2 %3 음으로 %4 초 연주하기 %5',
-                arduino_ext_set_servo: '디지털 %1 번 핀의 서보모터를 %2 의 각도로 정하기 %3',
-                arduino_ext_get_digital: '디지털 %1 번 센서값',
+                arduino_ext_set_tone: '디지털 %1 번 핀의 버저를 %2 %3 음으로 %4 초 울리기 %5',
+                arduino_ext_set_servo: '디지털 %1 번 핀의 서보모터를 %2 도로 정하기 %3',
+                arduino_ext_get_digital: '디지털 %1 번 값',
+            },
+            Helper: {
+                arduino_ext_get_analog_value: '선택한 핀의 아날로그 값입니다. (0 ~ 1023)',
+                arduino_ext_get_analog_value_map:
+                    '선택한 핀의 아날로그 값을 입력한 범위로 바꾼 값입니다.',
+                arduino_ext_get_ultrasonic_value: '선택한 핀에 연결한 초음파 센서 값입니다.',
+                arduino_ext_set_servo: '선택한 핀에 연결한 서보모터의 각도를 정합니다.',
+                arduino_ext_set_tone:
+                    '선택한 핀에 연결한 버저를 선택한 음으로 입력한 시간 동안 울립니다.',
+                arduino_ext_get_digital:
+                    '선택한 핀의 디지털 값입니다. 핀이 켜진 경우 "참"으로 판단합니다.',
+                arduino_ext_toggle_led: '선택한 핀을 켜거나 끕니다.',
+                arduino_ext_digital_pwm: '선택한 핀을 입력한 값으로 정합니다.',
             },
         },
         en: {
             template: {
-                arduino_ext_get_analog_value: 'Analog %1 Sensor value',
-                arduino_ext_get_analog_value_map: 'Map Value %1 %2 ~ %3 to %4 ~ %5',
-                arduino_ext_get_ultrasonic_value: 'Read ultrasonic sensor trig pin %1 echo pin %2',
-                arduino_ext_toggle_led: 'Digital %1 Pin %2 %3',
-                arduino_ext_digital_pwm: 'Digital %1 Pin %2 %3',
-                arduino_ext_set_tone: 'Play tone pin %1 on note %2 octave %3 beat %4 %5',
-                arduino_ext_set_servo: 'Set servo pin %1 angle as %2 %3',
-                arduino_ext_get_digital: 'Digital %1 Sensor value',
+                arduino_ext_get_analog_value: 'analog %1 value',
+                arduino_ext_get_analog_value_map:
+                    'mapped value of analog %1 that %2 ~ %3 to %4 ~ %5',
+                arduino_ext_get_ultrasonic_value:
+                    'ultrasonic sensor value that connects pin %1 to Trig and pin %2 to Echo',
+                arduino_ext_toggle_led: '%2 digital %1 pin %3',
+                arduino_ext_digital_pwm: 'Set digital %1 pin to %2 %3',
+                arduino_ext_set_tone:
+                    'Ring buzzer of pin %1 on note %2 octave %3 for %4 second(s) %5',
+                arduino_ext_set_servo: 'Set servo motor of pin %1 to %2 degree %3',
+                arduino_ext_get_digital: 'digital %1 value',
+            },
+            Helper: {
+                arduino_ext_get_analog_value:
+                    'Reports the value that analog signal of the selected pin. (0 ~ 1023)',
+                arduino_ext_get_analog_value_map:
+                    'Reports the value that analog signal of the selected pin mapping original range onto input range.',
+                arduino_ext_get_ultrasonic_value:
+                    'Reports the value of ultrasonic sensor that connects pin.',
+                arduino_ext_set_servo:
+                    'Set the degree of servo motor that connected with selected pin.',
+                arduino_ext_set_tone:
+                    'Rings buzzer connected with selected pin during input seconds.',
+                arduino_ext_get_digital:
+                    'Checks whether the selected pin is turned on. If it turned on, it is judged as "True".',
+                arduino_ext_toggle_led: 'Turn on or turn off the selected pin.',
+                arduino_ext_digital_pwm: 'Set the selected pin to input value.',
             },
         },
     };
@@ -110,7 +144,7 @@ Entry.ArduinoExt.blockMenuBlocks = [
 ];
 
 //region arduinoExt 아두이노 확장모드
-Entry.ArduinoExt.getBlocks = function() {
+Entry.ArduinoExt.getBlocks = function () {
     return {
         arduino_ext_analog_list: {
             color: EntryStatic.colorSet.block.default.HARDWARE,
@@ -142,7 +176,7 @@ Entry.ArduinoExt.getBlocks = function() {
             paramsKeyMap: {
                 PORT: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getField('PORT');
             },
             syntax: {
@@ -202,10 +236,12 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExtGet',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
-                var port = script.getValue('PORT', script);
-                var ANALOG = Entry.hw.portData.ANALOG;
-                if (port[0] === 'A') port = port.substring(1);
+            func(sprite, script) {
+                let port = script.getValue('PORT', script);
+                const ANALOG = Entry.hw.portData.ANALOG;
+                if (port[0] === 'A') {
+                    port = port.substring(1);
+                }
                 return ANALOG ? ANALOG[port] || 0 : 0;
             },
             syntax: {
@@ -296,16 +332,16 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExtGet',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
-                var result = script.getValue('PORT', script);
-                var ANALOG = Entry.hw.portData.ANALOG;
-                var value2 = script.getNumberValue('VALUE2', script);
-                var value3 = script.getNumberValue('VALUE3', script);
-                var value4 = script.getNumberValue('VALUE4', script);
-                var value5 = script.getNumberValue('VALUE5', script);
-                var stringValue4 = script.getValue('VALUE4', script);
-                var stringValue5 = script.getValue('VALUE5', script);
-                var isFloat = false;
+            func(sprite, script) {
+                let result = script.getValue('PORT', script);
+                const ANALOG = Entry.hw.portData.ANALOG;
+                let value2 = script.getNumberValue('VALUE2', script);
+                let value3 = script.getNumberValue('VALUE3', script);
+                let value4 = script.getNumberValue('VALUE4', script);
+                let value5 = script.getNumberValue('VALUE5', script);
+                const stringValue4 = script.getValue('VALUE4', script);
+                const stringValue5 = script.getValue('VALUE5', script);
+                let isFloat = false;
 
                 if (
                     (Entry.Utils.isNumber(stringValue4) && stringValue4.indexOf('.') > -1) ||
@@ -408,20 +444,20 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExtGet',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
-                var port1 = script.getNumberValue('PORT1', script);
-                var port2 = script.getNumberValue('PORT2', script);
+            func(sprite, script) {
+                const port1 = script.getNumberValue('PORT1', script);
+                const port2 = script.getNumberValue('PORT2', script);
 
-                if (!Entry.hw.sendQueue['SET']) {
-                    Entry.hw.sendQueue['SET'] = {};
+                if (!Entry.hw.sendQueue.SET) {
+                    Entry.hw.sendQueue.SET = {};
                 }
-                delete Entry.hw.sendQueue['SET'][port1];
-                delete Entry.hw.sendQueue['SET'][port2];
+                delete Entry.hw.sendQueue.SET[port1];
+                delete Entry.hw.sendQueue.SET[port2];
 
-                if (!Entry.hw.sendQueue['GET']) {
-                    Entry.hw.sendQueue['GET'] = {};
+                if (!Entry.hw.sendQueue.GET) {
+                    Entry.hw.sendQueue.GET = {};
                 }
-                Entry.hw.sendQueue['GET'][Entry.ArduinoExt.sensorTypes.ULTRASONIC] = {
+                Entry.hw.sendQueue.GET[Entry.ArduinoExt.sensorTypes.ULTRASONIC] = {
                     port: [port1, port2],
                     time: new Date().getTime(),
                 };
@@ -474,17 +510,17 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExtGet',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
+            func(sprite, script) {
                 const { hwModule = {} } = Entry.hw;
                 const { name } = hwModule;
-                if (name === 'ArduinoExt') {
-                    var port = script.getNumberValue('PORT', script);
-                    var DIGITAL = Entry.hw.portData.DIGITAL;
-                    if (!Entry.hw.sendQueue['GET']) {
-                        Entry.hw.sendQueue['GET'] = {};
+                if (name === 'ArduinoExt' || name === 'ArduinoNano') {
+                    const port = script.getNumberValue('PORT', script);
+                    const DIGITAL = Entry.hw.portData.DIGITAL;
+                    if (!Entry.hw.sendQueue.GET) {
+                        Entry.hw.sendQueue.GET = {};
                     }
-                    Entry.hw.sendQueue['GET'][Entry.ArduinoExt.sensorTypes.DIGITAL] = {
-                        port: port,
+                    Entry.hw.sendQueue.GET[Entry.ArduinoExt.sensorTypes.DIGITAL] = {
+                        port,
                         time: new Date().getTime(),
                     };
                     return DIGITAL ? DIGITAL[port] || 0 : 0;
@@ -516,7 +552,10 @@ Entry.ArduinoExt.getBlocks = function() {
             params: [
                 {
                     type: 'Dropdown',
-                    options: [[Lang.Blocks.ARDUINO_on, 'on'], [Lang.Blocks.ARDUINO_off, 'off']],
+                    options: [
+                        [Lang.Blocks.ARDUINO_on, 'on'],
+                        [Lang.Blocks.ARDUINO_off, 'off'],
+                    ],
                     value: 'on',
                     fontSize: 11,
                     bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
@@ -530,7 +569,7 @@ Entry.ArduinoExt.getBlocks = function() {
             paramsKeyMap: {
                 OPERATOR: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getStringField('OPERATOR');
             },
             syntax: {
@@ -551,7 +590,6 @@ Entry.ArduinoExt.getBlocks = function() {
                                 converter: Entry.block.converters.returnStringValueUpperCase,
                                 codeMap: 'Entry.CodeMap.Arduino.arduino_get_digital_toggle[0]',
                                 bgColor: EntryStatic.colorSet.block.darken.HARDWARE,
-                                arrowColor: EntryStatic.colorSet.arrow.default.HARDWARE,
                             },
                         ],
                         keyOption: 'arduino_get_digital_toggle',
@@ -601,9 +639,9 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExt',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
-                var port = script.getNumberValue('PORT');
-                var value = script.getValue('VALUE');
+            func(sprite, script) {
+                const port = script.getNumberValue('PORT');
+                let value = script.getValue('VALUE');
 
                 if (typeof value === 'string') {
                     value = value.toLowerCase();
@@ -615,10 +653,10 @@ Entry.ArduinoExt.getBlocks = function() {
                 } else {
                     throw new Error();
                 }
-                if (!Entry.hw.sendQueue['SET']) {
-                    Entry.hw.sendQueue['SET'] = {};
+                if (!Entry.hw.sendQueue.SET) {
+                    Entry.hw.sendQueue.SET = {};
                 }
-                Entry.hw.sendQueue['SET'][port] = {
+                Entry.hw.sendQueue.SET[port] = {
                     type: Entry.ArduinoExt.sensorTypes.DIGITAL,
                     data: value,
                     time: new Date().getTime(),
@@ -686,16 +724,16 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExt',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
-                var port = script.getNumberValue('PORT');
-                var value = script.getNumberValue('VALUE');
+            func(sprite, script) {
+                const port = script.getNumberValue('PORT');
+                let value = script.getNumberValue('VALUE');
                 value = Math.round(value);
                 value = Math.max(value, 0);
                 value = Math.min(value, 255);
-                if (!Entry.hw.sendQueue['SET']) {
-                    Entry.hw.sendQueue['SET'] = {};
+                if (!Entry.hw.sendQueue.SET) {
+                    Entry.hw.sendQueue.SET = {};
                 }
-                Entry.hw.sendQueue['SET'][port] = {
+                Entry.hw.sendQueue.SET[port] = {
                     type: Entry.ArduinoExt.sensorTypes.PWM,
                     data: value,
                     time: new Date().getTime(),
@@ -758,7 +796,7 @@ Entry.ArduinoExt.getBlocks = function() {
             paramsKeyMap: {
                 NOTE: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getField('NOTE');
             },
             syntax: {
@@ -820,7 +858,7 @@ Entry.ArduinoExt.getBlocks = function() {
             paramsKeyMap: {
                 NOTE: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getNumberValue('NOTE');
             },
             syntax: {
@@ -863,7 +901,7 @@ Entry.ArduinoExt.getBlocks = function() {
             paramsKeyMap: {
                 OCTAVE: 0,
             },
-            func: function(sprite, script) {
+            func(sprite, script) {
                 return script.getField('OCTAVE');
             },
             syntax: {
@@ -936,13 +974,15 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExt',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
-                var sq = Entry.hw.sendQueue;
-                var port = script.getNumberValue('PORT', script);
+            func(sprite, script) {
+                const sq = Entry.hw.sendQueue;
+                const port = script.getNumberValue('PORT', script);
 
                 if (!script.isStart) {
-                    var note = script.getValue('NOTE', script);
-                    if (!Entry.Utils.isNumber(note)) note = Entry.ArduinoExt.toneTable[note];
+                    let note = script.getValue('NOTE', script);
+                    if (!Entry.Utils.isNumber(note)) {
+                        note = Entry.ArduinoExt.toneTable[note];
+                    }
 
                     if (note < 0) {
                         note = 0;
@@ -950,18 +990,18 @@ Entry.ArduinoExt.getBlocks = function() {
                         note = 12;
                     }
 
-                    var duration = script.getNumberValue('DURATION', script);
+                    let duration = script.getNumberValue('DURATION', script);
 
                     if (duration < 0) {
                         duration = 0;
                     }
 
-                    if (!sq['SET']) {
-                        sq['SET'] = {};
+                    if (!sq.SET) {
+                        sq.SET = {};
                     }
 
                     if (duration === 0) {
-                        sq['SET'][port] = {
+                        sq.SET[port] = {
                             type: Entry.ArduinoExt.sensorTypes.TONE,
                             data: 0,
                             time: new Date().getTime(),
@@ -969,14 +1009,14 @@ Entry.ArduinoExt.getBlocks = function() {
                         return script.callReturn();
                     }
 
-                    var octave = script.getNumberValue('OCTAVE', script) - 1;
+                    let octave = script.getNumberValue('OCTAVE', script) - 1;
                     if (octave < 0) {
                         octave = 0;
                     } else if (octave > 5) {
                         octave = 5;
                     }
 
-                    var value = 0;
+                    let value = 0;
 
                     if (note != 0) {
                         value = Entry.ArduinoExt.toneMap[note][octave];
@@ -986,16 +1026,16 @@ Entry.ArduinoExt.getBlocks = function() {
                     script.isStart = true;
                     script.timeFlag = 1;
 
-                    sq['SET'][port] = {
+                    sq.SET[port] = {
                         type: Entry.ArduinoExt.sensorTypes.TONE,
                         data: {
-                            value: value,
-                            duration: duration,
+                            value,
+                            duration,
                         },
                         time: new Date().getTime(),
                     };
 
-                    setTimeout(function() {
+                    setTimeout(() => {
                         script.timeFlag = 0;
                     }, duration + 32);
                     return script;
@@ -1004,7 +1044,7 @@ Entry.ArduinoExt.getBlocks = function() {
                 } else {
                     delete script.timeFlag;
                     delete script.isStart;
-                    sq['SET'][port] = {
+                    sq.SET[port] = {
                         type: Entry.ArduinoExt.sensorTypes.TONE,
                         data: 0,
                         time: new Date().getTime(),
@@ -1079,17 +1119,17 @@ Entry.ArduinoExt.getBlocks = function() {
             },
             class: 'ArduinoExt',
             isNotFor: ['ArduinoExt'],
-            func: function(sprite, script) {
-                var sq = Entry.hw.sendQueue;
-                var port = script.getNumberValue('PORT', script);
-                var value = script.getNumberValue('VALUE', script);
+            func(sprite, script) {
+                const sq = Entry.hw.sendQueue;
+                const port = script.getNumberValue('PORT', script);
+                let value = script.getNumberValue('VALUE', script);
                 value = Math.min(180, value);
                 value = Math.max(0, value);
 
-                if (!sq['SET']) {
-                    sq['SET'] = {};
+                if (!sq.SET) {
+                    sq.SET = {};
                 }
-                sq['SET'][port] = {
+                sq.SET[port] = {
                     type: Entry.ArduinoExt.sensorTypes.SERVO_PIN,
                     data: value,
                     time: new Date().getTime(),

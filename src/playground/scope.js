@@ -13,21 +13,31 @@ class Scope {
     }
 
     getParam(index) {
-        const fieldBlock = this.block.params[index];
-        const newScope = new Entry.Scope(fieldBlock, this.executor);
-        const result = Entry.block[fieldBlock.type].func.call(newScope, this.entity, newScope);
-        return result;
+        const param = this.block.params[index];
+        if (param instanceof Entry.Block) {
+            const newScope = new Entry.Scope(param, this.executor);
+            const result = newScope.run(this.entity, true);
+            return result;
+        } else {
+            return this.filterReservedKeywords(param);
+        }
+    }
+
+    // 클래스 레벨에서 한 번만 생성
+    static _reservedKeywords = new Set(['__proto__']);
+
+    filterReservedKeywords(param) {
+        return Scope._reservedKeywords.has(param) ? '' : param;
     }
 
     getParams() {
-        const that = this;
         return this.block.params.map((param) => {
             if (param instanceof Entry.Block) {
                 const fieldBlock = param;
-                const newScope = new Entry.Scope(fieldBlock, that.executor);
-                return Entry.block[fieldBlock.type].func.call(newScope, that.entity, newScope);
+                const newScope = new Entry.Scope(fieldBlock, this.executor);
+                return newScope.run(this.entity, true);
             } else {
-                return param;
+                return this.filterReservedKeywords(param);
             }
         });
     }
@@ -74,34 +84,11 @@ class Scope {
     }
 
     getValues(keys, scope) {
-        const valueState = this.executor.valueState || {};
-        const fieldBlocks = keys.map((key) => {
-            return this.block.params[this._getParamIndex(key, scope)];
-        });
-        const currentBlockId = scope.block.data.id;
-        valueState[currentBlockId] = valueState[currentBlockId] || { state: 'wait' };
-
-        this._setChildBlockState(fieldBlocks, currentBlockId);
-
-        fieldBlocks.forEach((fieldBlock) => {
-            const blockId = fieldBlock.data.id;
-            if (valueState[blockId].state === 'pending') {
-                this._setBlockState(fieldBlock, valueState);
-            }
-        });
-
-        return fieldBlocks.map((fieldBlock) => {
-            return valueState[fieldBlock.data.id].value;
-        });
+        return keys.map((key) => this.values[this._getParamIndex(key, scope)]);
     }
 
     getValue(key, scope) {
-        const executorValueMap = this.executor.valueMap;
-        const fieldBlock = this.block.params[this._getParamIndex(key, scope)];
-        const blockId = fieldBlock.data.id;
-
-        this._setExecutorValueMap([fieldBlock]);
-        return executorValueMap[blockId];
+        return this.values[this._getParamIndex(key, scope)];
     }
 
     /**
@@ -118,6 +105,11 @@ class Scope {
 
             if (executorValueMap[blockId] === 'isPending') {
                 throw new Entry.Utils.AsyncError();
+            } else if (
+                executorValueMap[blockId] &&
+                executorValueMap[blockId].name === 'IncompatibleError'
+            ) {
+                throw executorValueMap[blockId];
             } else if (executorValueMap[blockId] !== undefined) {
                 return executorValueMap[blockId];
             }
@@ -142,7 +134,7 @@ class Scope {
     }
 
     getNumberValue(key, scope) {
-        return Number(this.getValue(key, scope));
+        return parseFloat(this.getValue(key, scope)) || 0;
     }
 
     getBooleanValue(key, scope) {
@@ -155,7 +147,7 @@ class Scope {
     }
 
     getField(key) {
-        return this.block.params[this._getParamIndex(key)];
+        return this.filterReservedKeywords(this.block.params[this._getParamIndex(key)]);
     }
 
     getStringField(key) {
@@ -187,6 +179,30 @@ class Scope {
     die() {
         this.block = null;
         return Entry.STATIC.BREAK;
+    }
+
+    run(entity, isValue) {
+        const schema = this.block.getSchema();
+        if (this.isCondition) {
+            return schema.func.call(this, entity, this);
+        }
+        const values = this.getParams();
+        const isPromise = values.some((value) => value instanceof Promise);
+        if (!schema.func) {
+            return;
+        }
+
+        if (!isPromise) {
+            this.values = values;
+            return schema.func.call(this, entity, this);
+        } else {
+            return Promise.all(values).then(async (values) => {
+                if (Entry.engine.state !== 'stop' && this.block) {
+                    this.values = values;
+                    return await schema.func.call(this, entity, this);
+                }
+            });
+        }
     }
 }
 

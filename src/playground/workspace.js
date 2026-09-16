@@ -1,7 +1,5 @@
-/*
- *
- */
-'use strict';
+import { Destroyer } from '../util/destroyer/Destroyer';
+import debounce from 'lodash/debounce';
 
 Entry.Workspace = class Workspace {
     schema = {
@@ -11,9 +9,11 @@ Entry.Workspace = class Workspace {
 
     constructor(options) {
         Entry.Model(this, false);
+        this._destroyer = this._destroyer || new Destroyer();
+        this._destroyer.destroy();
         this.scale = 1;
-        this.dSetMode = Entry.Utils.debounce(this.setMode, 200);
-        this.dReDraw = Entry.Utils.debounce(this.reDraw, 150);
+        this.dSetMode = debounce(this.setMode, 200);
+        this.dReDraw = debounce(this.reDraw, 150);
 
         this.observe(this, '_handleChangeBoard', ['selectedBoard'], false);
         this.trashcan = new Entry.FieldTrashcan();
@@ -34,9 +34,9 @@ Entry.Workspace = class Workspace {
                 option.dom,
                 option.align,
                 option.categoryData,
-                option.scroll,
-                this.readOnly
+                option.scroll
             );
+            this._destroyer.add(this.blockMenu);
             this.blockMenu.workspace = this;
             this.blockMenu.observe(this, '_setSelectedBlockView', ['selectedBlockView'], false);
         }
@@ -48,6 +48,10 @@ Entry.Workspace = class Workspace {
             this.board = new Entry.Board(option);
             this.board.observe(this, '_setSelectedBlockView', ['selectedBlockView'], false);
             this.set({ selectedBoard: this.board });
+
+            if (this.blockMenu) {
+                this.blockMenu.enableTrashcan();
+            }
         }
 
         option = options.vimBoard;
@@ -169,30 +173,44 @@ Entry.Workspace = class Workspace {
                     mode.runType = VIM.WORKSPACE_MODE;
                 }
                 e.block && Entry.getMainWS() && Entry.getMainWS().board.activateBlock(e.block);
+            } finally {
+                this.oldMode = 1;
+                this.mode = 1;
             }
         };
 
         switch (this.mode) {
             case WORKSPACE.MODE_VIMBOARD: {
                 const alertMessage =
-                    Util.validateVariableToPython() ||
+                    Util.validateVariableAndListToPython() ||
                     Util.validateFunctionToPython() ||
-                    Util.hasExpansionBlocks();
+                    Util.hasNotSupportedBlocks();
 
                 const invalidEditorModeErrorMessage = Util.canConvertTextModeForOverlayMode(
                     Entry.Workspace.MODE_VIMBOARD
                 );
                 if (invalidEditorModeErrorMessage) {
-                    entrylms.alert(invalidEditorModeErrorMessage);
+                    Entry.modal.alert(invalidEditorModeErrorMessage);
                     return;
                 }
 
                 if (alertMessage) {
                     if (alertMessage.type === 'warning') {
-                        entrylms.confirm(alertMessage.message).then((result) => {
+                        Entry.modal.confirm(alertMessage.message).then((result) => {
                             if (result) {
-                                changeToPythonMode();
-                                dispatchChangeBoardEvent();
+                                Entry.variableContainer.removeNotPythonSupportedFunction();
+                                Entry.expansion?.banExpansionBlocks(Entry.expansionBlocks);
+                                Entry.aiUtilize?.banAIUtilizeBlocks(Entry.aiUtilizeBlocks);
+                                Entry.hwLite?.banClassAllHardwareLite();
+                                Entry.playground?.dataTable?.removeAllBlocks();
+                                Entry.aiLearning?.removeAllBlocks();
+                                Util.removeNotSupportedBlock();
+                                Entry.playground.blockMenu.banClass('python_disable');
+                                // 블럭 삭제되고 처리
+                                requestAnimationFrame(() => {
+                                    changeToPythonMode();
+                                    dispatchChangeBoardEvent();
+                                });
                             } else {
                                 const mode = {};
                                 mode.boardType = WORKSPACE.MODE_BOARD;
@@ -202,7 +220,7 @@ Entry.Workspace = class Workspace {
                             }
                         });
                     } else if (alertMessage.type === 'error') {
-                        entrylms.alert(alertMessage.message);
+                        Entry.modal.alert(alertMessage.message);
 
                         const mode = {};
                         mode.boardType = WORKSPACE.MODE_BOARD;
@@ -221,6 +239,7 @@ Entry.Workspace = class Workspace {
                 try {
                     this.board.show();
                     blockMenu.unbanClass('functionInit', true);
+                    Entry.playground.blockMenu.unbanClass('python_disable');
                     this.set({ selectedBoard: this.board });
                     this.textToCode(this.oldMode, this.oldTextType);
                     if (this.overlayBoard) {
@@ -273,7 +292,7 @@ Entry.Workspace = class Workspace {
 
         function checkObjectAndAlert(object, message) {
             if (Entry.type === 'workspace' && !object) {
-                entrylms.alert(message || Lang.Workspace.object_not_exist_error);
+                Entry.modal.alert(message || Lang.Workspace.object_not_exist_error);
                 return false;
             }
             return true;
@@ -318,15 +337,12 @@ Entry.Workspace = class Workspace {
 
         code.load(changedCode);
         this.changeBoardCode(code);
-        setTimeout(
-            function() {
-                if (code.view) {
-                    code.view.reDraw();
-                    this.board.alignThreads();
-                }
-            }.bind(this),
-            0
-        );
+        setTimeout(() => {
+            if (code.view) {
+                code.view.reDraw();
+                this.board.alignThreads();
+            }
+        }, 0);
     }
 
     codeToText(code, mode) {
@@ -368,9 +384,8 @@ Entry.Workspace = class Workspace {
         }
 
         this.setHoverBlockView();
-        const that = this;
-        this._blockViewMouseUpEvent = blockView.mouseUpEvent.attach(this, function() {
-            that.blockViewMouseUpEvent.notify(blockView);
+        this._blockViewMouseUpEvent = blockView.mouseUpEvent.attach(this, () => {
+            this.blockViewMouseUpEvent.notify(blockView);
         });
     }
 
@@ -416,8 +431,13 @@ Entry.Workspace = class Workspace {
                     return;
                 }
             }
-            
-            const isBlockCodeView = Entry.playground.mainWorkspace.getMode() === Entry.Workspace.MODE_BOARD && (Entry.playground.getViewMode() === 'code' || Entry.playground.getViewMode() === 'variable');
+
+            const mainWorksapceMode = Entry.playground.mainWorkspace.getMode();
+            const playgroundMode = Entry.playground.getViewMode();
+            const isBlockCodeView =
+                (mainWorksapceMode === Entry.Workspace.MODE_OVERLAYBOARD ||
+                    mainWorksapceMode === Entry.Workspace.MODE_BOARD) &&
+                (playgroundMode === 'code' || playgroundMode === 'variable');
             switch (keyCode) {
                 case 86: //paste
                     if (
@@ -434,7 +454,10 @@ Entry.Workspace = class Workspace {
                     break;
                 case 219: {
                     //setMode(block) for textcoding ( ctrl + [ )
-                    if (!Entry.options.textCodingEnable) {
+                    if (
+                        !Entry.options.textCodingEnable ||
+                        Entry.playground.getViewMode() === 'picture'
+                    ) {
                         return;
                     }
                     const oldMode = Entry.getMainWS().oldMode;
@@ -451,7 +474,10 @@ Entry.Workspace = class Workspace {
                 }
                 case 221: {
                     //setMode(python) for textcoding ( ctrl + ] )
-                    if (!Entry.options.textCodingEnable) {
+                    if (
+                        !Entry.options.textCodingEnable ||
+                        Entry.playground.getViewMode() === 'picture'
+                    ) {
                         return;
                     }
 
@@ -459,7 +485,7 @@ Entry.Workspace = class Workspace {
                         Entry.Workspace.MODE_VIMBOARD
                     );
                     if (message) {
-                        entrylms.alert(message);
+                        Entry.modal.alert(message);
                         return;
                     }
 
@@ -488,9 +514,9 @@ Entry.Workspace = class Workspace {
                         !blockView.isInBlockMenu &&
                         blockView.block.isDeletable()
                     ) {
-                        (function(block) {
+                        (function (block) {
                             block.copyToClipboard();
-                            block.destroy(true, true);
+                            Entry.do('destroyBlockBelow', block);
                             blockView.getBoard().setSelectedBlock(null);
                         })(blockView.block);
                     }
@@ -562,7 +588,7 @@ Entry.Workspace = class Workspace {
                         blockView.block.isDeletable() &&
                         !blockView.isFieldEditing()
                     ) {
-                        if(Entry.engine.isState('stop')){
+                        if (Entry.engine.isState('stop')) {
                             Entry.do('destroyBlock', blockView.block);
                             this.board.set({ selectedBlockView: null });
                             e.preventDefault();
@@ -573,15 +599,14 @@ Entry.Workspace = class Workspace {
         }
 
         //delay for fields value applied
-        setTimeout(function() {
+        setTimeout(() => {
             Entry.disposeEvent && Entry.disposeEvent.notify(e);
         }, 0);
 
         function checkObjectAndAlert(object, message) {
             if (!object) {
-                message =
-                    message || '오브젝트가 존재하지 않습니다. 오브젝트를 추가한 후 시도해주세요.';
-                entrylms.alert(message);
+                message = message || Lang.Workspace.object_not_exist_error;
+                Entry.modal.alert(message);
                 return false;
             }
             return true;
@@ -692,11 +717,13 @@ Entry.Workspace = class Workspace {
     reDraw() {
         const blockMenu = this.blockMenu;
         const board = this.board;
+        const overlayBoard = this.overlayBoard;
 
         blockMenu && blockMenu.reDraw();
         board && board.reDraw();
+        overlayBoard && overlayBoard.reDraw();
 
-        if (blockMenu || board) {
+        if (blockMenu || board || overlayBoard) {
             this.reDrawEvent.notify();
         }
     }
@@ -721,6 +748,10 @@ Entry.Workspace = class Workspace {
         if (this.overlayBoard) {
             this.overlayBoard.setScale(scale);
         }
+    }
+
+    destroy() {
+        this._destroyer.destroy();
     }
 };
 

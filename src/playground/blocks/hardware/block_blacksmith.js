@@ -12,16 +12,21 @@ Entry.Blacksmith = {
     setZero: function() {
         if (!Entry.hw.sendQueue.SET) {
             Entry.hw.sendQueue = {
-                GET: {},
                 SET: {},
             };
         } else {
             var keySet = Object.keys(Entry.hw.sendQueue.SET);
             keySet.forEach(function(key) {
-                Entry.hw.sendQueue.SET[key].data = 0;
-                Entry.hw.sendQueue.SET[key].time = new Date().getTime();
+                if (Entry.hw.sendQueue.SET[key].type == Entry.Blacksmith.sensorTypes.DCMOTOR) {
+                    Entry.hw.sendQueue.SET[key].data.value1 = 0;
+                    Entry.hw.sendQueue.SET[key].time = new Date().getTime();
+                } else {
+                    Entry.hw.sendQueue.SET[key].data = 0;
+                    Entry.hw.sendQueue.SET[key].time = new Date().getTime();
+                }
             });
         }
+        Entry.hw.sendQueue.GET = {};
         Entry.hw.update();
     },
     sensorTypes: {
@@ -40,6 +45,7 @@ Entry.Blacksmith = {
         RGBLED: 12,
         DCMOTOR: 13,
         OLED: 14,
+        PIR: 15,
     },
     toneTable: {
         '0': 0,
@@ -86,12 +92,16 @@ Entry.Blacksmith.setLanguage = function() {
                 blacksmith_dcmotor_direction_reverse: '역방향',
                 blacksmith_btData_select_number: '숫자',
                 blacksmith_btData_select_character: '문자',
+                blacksmith_set_digital_lcd: 'LCD화면 %1 줄에 %2 나타내기 %3',
+                blacksmith_set_digital_bluetooth: '블루투스 TX 3 핀에 %1 데이터 보내기 %2',
                 blacksmith_get_analog_value: '아날로그 %1 번 핀 센서 값',
                 blacksmith_get_analog_mapping:
                     '아날로그 %1 번 핀 센서 값의 범위를 %2 ~ %3 에서 %4 ~ %5 로 바꾼 값',
-                blacksmith_get_digital_bluetooth: '블루투스 RX 2 핀 %1 데이터 값',
+                blacksmith_get_digital_bluetooth: '블루투스 RX 2 핀 데이터 값',
                 blacksmith_get_digital_ultrasonic: '초음파 Trig %1 핀 Echo %2 핀 센서 값',
+                blacksmith_get_digital: '디지털 %1 번 핀 센서 값',
                 blacksmith_get_digital_toggle: '디지털 %1 번 핀 센서 값',
+                blacksmith_get_digital_pir: 'PIR %1 번 핀 센서 값',
                 blacksmith_set_digital_toggle: '디지털 %1 번 핀 %2 %3',
                 blacksmith_set_digital_pwm: '디지털 %1 번 핀을 %2 (으)로 정하기 %3',
                 blacksmith_set_digital_rgbled:
@@ -104,6 +114,15 @@ Entry.Blacksmith.setLanguage = function() {
                 blacksmith_module_digital_lcd: 'LCD화면 %1 줄에 %2 나타내기 %3',
                 blacksmith_module_digital_bluetooth: '블루투스 TX 3 핀에 %1 데이터 보내기 %2',
                 blacksmith_module_digital_oled: 'OLED화면 X 좌표 %1  Y 좌표 %2 에 %3 나타내기 %4',
+            },
+            Blocks: {
+                blacksmith_toggle_on: '켜기',
+                blacksmith_toggle_off: '끄기',
+                blacksmith_lcd_first_line: '첫 번째',
+                blacksmith_lcd_seconds_line: '두 번째',
+            },
+            Menus: {
+                blacksmith: '대장장이 보드',
             },
         },
         en: {
@@ -119,8 +138,9 @@ Entry.Blacksmith.setLanguage = function() {
                 blacksmith_get_analog_value: 'Read analog %1 pin sensor value',
                 blacksmith_get_analog_mapping:
                     'Map analog %1 pin sensor value from %2 ~ %3 to %4 ~ %5',
-                blacksmith_get_digital_bluetooth: 'Bluetooth RX 2 %1 value',
+                blacksmith_get_digital_bluetooth: 'Bluetooth RX 2 value',
                 blacksmith_get_digital_ultrasonic: 'Read ultrasonic Trig %1 Echo %2 sensor value',
+                blacksmith_get_digital: 'Digital %1 pin sensor value',
                 blacksmith_get_digital_toggle: 'Digital %1 pin sensor value',
                 blacksmith_set_digital_toggle: 'Digital %1 pin %2 %3',
                 blacksmith_set_digital_pwm: 'Digital pwm %1 Pin %2 %3',
@@ -132,6 +152,15 @@ Entry.Blacksmith.setLanguage = function() {
                 blacksmith_module_digital_bluetooth: 'Bluetooth TX 3 Pin %1 data send %2',
                 blacksmith_module_digital_oled: 'OLED X codinate %1 Y coodinate %2 appear %3 %4',
             },
+            Blocks: {
+                blacksmith_toggle_on: 'on',
+                blacksmith_toggle_off: 'off',
+                blacksmith_lcd_first_line: 'first',
+                blacksmith_lcd_seconds_line: 'seconds',
+            },
+            Menus: {
+                blacksmith: 'Blacksmith Board',
+            },
         },
     };
 };
@@ -140,7 +169,9 @@ Entry.Blacksmith.blockMenuBlocks = [
     'blacksmith_get_analog_mapping',
     'blacksmith_get_digital_bluetooth',
     'blacksmith_get_digital_ultrasonic',
+    'blacksmith_get_digital',
     'blacksmith_get_digital_toggle',
+    'blacksmith_get_digital_pir',
     'blacksmith_set_digital_toggle',
     'blacksmith_set_digital_pwm',
     'blacksmith_set_digital_rgbled',
@@ -604,34 +635,18 @@ Entry.Blacksmith.getBlocks = function() {
             skeleton: 'basic_string_field',
             template: Lang.template.blacksmith_get_digital_bluetooth,
             statements: [],
-            params: [
-                {
-                    type: 'Block',
-                    accept: 'string',
-                },
-            ],
+            params: [],
             events: {},
             def: {
-                params: [
-                    {
-                        type: 'blacksmith_list_digital_btData_select',
-                    },
-                ],
+                params: [],
                 type: 'blacksmith_get_digital_bluetooth',
             },
-            paramsKeyMap: {
-                VALUE: 0,
-            },
+            paramsKeyMap: {},
             class: 'blacksmithGet',
             isNotFor: ['blacksmith'],
             func: function(sprite, script) {
                 var port = 2;
-                var lengthCount = 0;
-                var result = '';
-                var makeString = '';
-                var returnType = script.getValue('VALUE', script);
                 var getString = Entry.hw.portData.READ_BLUETOOTH;
-
                 if (!Entry.hw.sendQueue['SET']) {
                     Entry.hw.sendQueue['SET'] = {};
                 }
@@ -644,40 +659,7 @@ Entry.Blacksmith.getBlocks = function() {
                     time: new Date().getTime(),
                 };
 
-                for (var i = 0; i < getString.length; i++) {
-                    if (i == getString.length - 1) {
-                        if (lengthCount == 2) {
-                            makeString = getString[i - 1] + makeString[i];
-                        } else if (lengthCount == 3) {
-                            makeString = getString[i - 2] + getString[i - 1] + getString[i];
-                        }
-                        makeString = Number(makeString);
-                        if (returnType == 1) {
-                            makeString = String.fromCharCode(makeString);
-                        }
-                        result = result + makeString;
-                        lengthCount = 0;
-                        makeString = '';
-                    }
-                    if (getString[i] == ',') {
-                        if (lengthCount == 2) {
-                            makeString = getString[i - 2] + getString[i - 1];
-                        } else if (lengthCount == 3) {
-                            makeString = getString[i - 3] + getString[i - 2] + getString[i - 1];
-                        }
-                        makeString = Number(makeString);
-                        if (returnType == 1) {
-                            makeString = String.fromCharCode(makeString);
-                        }
-                        result = result + makeString;
-                        lengthCount = 0;
-                        makeString = '';
-                    } else {
-                        lengthCount += 1;
-                    }
-                }
-
-                return result.slice(0, result.length - 1);
+                return getString ? getString.slice(0, getString.length - 1) : ' ';
             },
             syntax: { js: [], py: ['blacksmith.get_digital_bluetooth()'] },
         },
@@ -742,6 +724,54 @@ Entry.Blacksmith.getBlocks = function() {
                 py: ['blacksmith.get_digital_ultrasonic(%1, %2)'],
             },
         },
+        blacksmith_get_digital: {
+            color: EntryStatic.colorSet.block.default.HARDWARE,
+            outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
+            fontColor: '#fff',
+            skeleton: 'basic_string_field',
+            statements: [],
+            template: Lang.template.blacksmith_get_digital,
+            params: [
+                {
+                    type: 'Block',
+                    accept: 'string',
+                    defaultType: 'number',
+                },
+            ],
+            events: {},
+            def: {
+                params: [
+                    {
+                        type: 'blacksmith_list_digital_basic',
+                    },
+                ],
+                type: 'blacksmith_get_digital',
+            },
+            paramsKeyMap: {
+                PORT: 0,
+            },
+            class: 'blacksmithGet',
+            isNotFor: ['blacksmith'],
+            func: function(sprite, script) {
+                var port = script.getNumberValue('PORT');
+                var DIGITAL = Entry.hw.portData.DIGITAL;
+
+                if (!Entry.hw.sendQueue['GET']) {
+                    Entry.hw.sendQueue['GET'] = {};
+                }
+                if (Entry.hw.sendQueue.SET[port]) {
+                    return Entry.hw.sendQueue.SET[port].data;
+                } else {
+                    Entry.hw.sendQueue['GET'][Entry.Blacksmith.sensorTypes.DIGITAL] = {
+                        port: port,
+                        time: new Date().getTime(),
+                    };
+                }
+
+                return DIGITAL ? DIGITAL[port] || 0 : 0;
+            },
+            syntax: { js: [], py: ['blacksmith.get_digital(%1)'] },
+        },
         blacksmith_get_digital_toggle: {
             color: EntryStatic.colorSet.block.default.HARDWARE,
             outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
@@ -784,6 +814,49 @@ Entry.Blacksmith.getBlocks = function() {
                 return DIGITAL ? DIGITAL[port] || 0 : 0;
             },
             syntax: { js: [], py: ['blacksmith.get_digital_toggle(%1)'] },
+        },
+        blacksmith_get_digital_pir: {
+            color: EntryStatic.colorSet.block.default.HARDWARE,
+            outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
+            fontColor: '#fff',
+            skeleton: 'basic_boolean_field',
+            statements: [],
+            template: Lang.template.blacksmith_get_digital_pir,
+            params: [
+                {
+                    type: 'Block',
+                    accept: 'string',
+                },
+            ],
+            events: {},
+            def: {
+                params: [
+                    {
+                        type: 'blacksmith_list_digital_basic',
+                    },
+                ],
+                type: 'blacksmith_get_digital_pir',
+            },
+            paramsKeyMap: {
+                PORT: 0,
+            },
+            class: 'blacksmithGet',
+            isNotFor: ['blacksmith'],
+            func: function(sprite, script) {
+                var port = script.getNumberValue('PORT');
+                var DIGITAL = Entry.hw.portData.DIGITAL;
+
+                if (!Entry.hw.sendQueue['GET']) {
+                    Entry.hw.sendQueue['GET'] = {};
+                }
+                Entry.hw.sendQueue['GET'][Entry.Blacksmith.sensorTypes.PIR] = {
+                    port: port,
+                    time: new Date().getTime(),
+                };
+
+                return DIGITAL ? DIGITAL[port] || 0 : 0;
+            },
+            syntax: { js: [], py: ['blacksmith.get_digital_pir(%1)'] },
         },
         blacksmith_set_digital_toggle: {
             color: EntryStatic.colorSet.block.default.HARDWARE,
@@ -1350,7 +1423,7 @@ Entry.Blacksmith.getBlocks = function() {
                     script.isStart = true;
                     script.timeFlag = 1;
                     var fps = Entry.FPS || 60;
-                    var timeValue = 60 / fps * 50;
+                    var timeValue = (60 / fps) * 50;
 
                     Entry.hw.sendQueue['SET'][line] = {
                         type: Entry.Blacksmith.sensorTypes.LCD,
@@ -1467,7 +1540,7 @@ Entry.Blacksmith.getBlocks = function() {
                     script.isStart = true;
                     script.timeFlag = 1;
                     var fps = Entry.FPS || 60;
-                    var timeValue = 60 / fps * 50;
+                    var timeValue = (60 / fps) * 50;
 
                     coodinate_x = Math.min(coodinate_x, 127);
                     coodinate_x = Math.max(coodinate_x, 0);
@@ -1514,7 +1587,7 @@ Entry.Blacksmith.getBlocks = function() {
             },
             syntax: { js: [], py: ['blacksmith.Module_digital_oled(%1, %2, %3)'] },
         },
-        blacksmith_set_digital_bluetooth: {
+        blacksmith_module_digital_bluetooth: {
             color: EntryStatic.colorSet.block.default.HARDWARE,
             outerLine: EntryStatic.colorSet.block.darken.HARDWARE,
             fontColor: '#fff',
@@ -1568,7 +1641,7 @@ Entry.Blacksmith.getBlocks = function() {
                     script.isStart = true;
                     script.timeFlag = 1;
                     var fps = Entry.FPS || 60;
-                    var timeValue = 60 / fps * 50;
+                    var timeValue = (60 / fps) * 50;
 
                     Entry.hw.sendQueue['SET'][port] = {
                         type: Entry.Blacksmith.sensorTypes.WRITE_BLUETOOTH,
